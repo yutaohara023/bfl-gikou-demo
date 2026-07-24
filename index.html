@@ -1,0 +1,1609 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BFL技工物 — 発注・進捗（デモ）</title>
+<style>
+:root{
+  --ground:#F5F4F1;
+  --surface:#FFFFFF;
+  --surface2:#EDECE8;
+  --ink:#22303A;
+  --muted:#6E7B85;
+  --line:#DDDCD6;
+  --accent:#0F5E73;
+  --accent-ink:#FFFFFF;
+  --danger:#B3402F;
+  --warn:#9A6A00;
+  --ok:#256D42;
+  --chip-ink:#3A4750;
+  --shadow:0 1px 2px rgba(34,48,58,.06),0 4px 14px rgba(34,48,58,.05);
+  --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ground:#12181C;
+    --surface:#1B2329;
+    --surface2:#232D34;
+    --ink:#E6ECEF;
+    --muted:#94A2AC;
+    --line:#2E3941;
+    --accent:#5BB8CE;
+    --accent-ink:#0C2229;
+    --danger:#E5806F;
+    --warn:#D9A94A;
+    --ok:#7CC397;
+    --chip-ink:#C7D2D9;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 4px 14px rgba(0,0,0,.28);
+  }
+}
+:root[data-theme="light"]{
+  --ground:#F5F4F1; --surface:#FFFFFF; --surface2:#EDECE8; --ink:#22303A; --muted:#6E7B85;
+  --line:#DDDCD6; --accent:#0F5E73; --accent-ink:#FFFFFF; --danger:#B3402F; --warn:#9A6A00;
+  --ok:#256D42; --chip-ink:#3A4750;
+  --shadow:0 1px 2px rgba(34,48,58,.06),0 4px 14px rgba(34,48,58,.05);
+}
+:root[data-theme="dark"]{
+  --ground:#12181C; --surface:#1B2329; --surface2:#232D34; --ink:#E6ECEF; --muted:#94A2AC;
+  --line:#2E3941; --accent:#5BB8CE; --accent-ink:#0C2229; --danger:#E5806F; --warn:#D9A94A;
+  --ok:#7CC397; --chip-ink:#C7D2D9;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 4px 14px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--ground);color:var(--ink);
+  font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Noto Sans JP",system-ui,sans-serif;
+  font-size:15px;line-height:1.55;
+  font-feature-settings:"palt";
+}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+input,select,textarea{font:inherit;color:var(--ink)}
+.num{font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.shell{max-width:430px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;background:var(--ground);position:relative}
+@media (min-width:520px){.shell{border-left:1px solid var(--line);border-right:1px solid var(--line)}}
+
+/* ---------- header ---------- */
+.top{position:sticky;top:0;z-index:20;background:var(--ground);border-bottom:1px solid var(--line)}
+.top-row{display:flex;align-items:center;gap:10px;padding:12px 16px 8px}
+.brand{font-weight:700;font-size:17px;letter-spacing:.02em}
+.brand small{display:block;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
+.top-actions{margin-left:auto;display:flex;gap:4px}
+.icon-btn{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:var(--muted)}
+.icon-btn:active{background:var(--surface2)}
+.icon-btn svg{width:20px;height:20px}
+.seg{display:flex;gap:4px;padding:0 16px 10px}
+.seg button{flex:1;padding:7px 0;border-radius:9px;background:var(--surface2);color:var(--muted);font-size:13px;font-weight:600}
+.seg button.on{background:var(--accent);color:var(--accent-ink)}
+.searchbar{padding:0 16px 10px;display:none}
+.searchbar.show{display:block}
+.searchbar input{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 16px 12px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:12.5px;font-weight:600;color:var(--chip-ink);white-space:nowrap}
+.chip .dot{width:9px;height:9px;border-radius:50%;border:1px solid rgba(0,0,0,.12)}
+.chip .n{color:var(--muted);font-weight:600}
+.chip.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface));color:var(--ink)}
+
+/* ---------- main / cards ---------- */
+main{flex:1;padding:14px 16px calc(84px + env(safe-area-inset-bottom))}
+.section-label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.12em;margin:18px 2px 8px;text-transform:uppercase}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-bottom:10px}
+.order-card{display:block;width:100%;text-align:left}
+.order-card:active{transform:scale(.995)}
+.oc-top{display:flex;align-items:baseline;gap:8px}
+.oc-name{font-weight:700;font-size:15.5px}
+.oc-karte{color:var(--muted);font-size:12.5px}
+.oc-no{margin-left:auto;color:var(--muted);font-size:11px}
+.status-pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;color:#333B41;border:1px solid rgba(0,0,0,.08)}
+.oc-items{margin:8px 0 6px;display:flex;flex-direction:column;gap:4px}
+.oc-item{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:13px}
+.teeth-tag{background:var(--surface2);border-radius:6px;padding:1px 7px;font-size:12px;font-weight:600}
+.oc-foot{display:flex;align-items:center;gap:10px;margin-top:8px;font-size:12.5px;color:var(--muted)}
+.due{font-weight:700;color:var(--ink)}
+.badge{padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700}
+.badge.late{background:color-mix(in srgb,var(--danger) 14%,var(--surface));color:var(--danger)}
+.badge.soon{background:color-mix(in srgb,var(--warn) 16%,var(--surface));color:var(--warn)}
+.badge.conflict{background:color-mix(in srgb,var(--danger) 14%,var(--surface));color:var(--danger)}
+.empty{color:var(--muted);text-align:center;padding:40px 0;font-size:13.5px}
+
+/* ---------- bottom nav ---------- */
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:30;
+  background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(10px);
+  border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+.nav button{flex:1;padding:9px 0 7px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;font-weight:600;color:var(--muted)}
+.nav button svg{width:22px;height:22px}
+.nav button.on{color:var(--accent)}
+
+/* ---------- detail ---------- */
+.back-row{display:flex;align-items:center;gap:6px;padding:10px 10px}
+.back-row .title{font-weight:700;font-size:15px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13.5px}
+.kv dt{color:var(--muted)}
+.kv dd{text-align:right}
+.item-block{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:8px;background:var(--ground)}
+.item-block .ib-name{font-weight:700;font-size:14px}
+.ib-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;font-size:12.5px;color:var(--muted);align-items:center}
+.stepper{display:flex;align-items:flex-start;gap:0;margin:10px 0 4px}
+.step{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;position:relative}
+.step .bub{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;background:var(--surface2);color:var(--muted);border:2px solid var(--line);position:relative;z-index:1}
+.step.done .bub{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.step.now .bub{border-color:var(--accent);color:var(--accent);background:var(--surface)}
+.step .lb{font-size:9.5px;color:var(--muted);text-align:center;line-height:1.25}
+.step.now .lb{color:var(--ink);font-weight:700}
+.step::before{content:"";position:absolute;top:12px;left:-50%;width:100%;height:2px;background:var(--line);z-index:0}
+.step:first-child::before{display:none}
+.step.done::before,.step.now::before{background:var(--accent)}
+.status-actions{display:flex;gap:8px;margin-top:12px}
+.btn{flex:1;padding:12px 0;border-radius:11px;font-weight:700;font-size:14px;text-align:center}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn.danger-ghost{border:1px solid color-mix(in srgb,var(--danger) 45%,var(--line));color:var(--danger);background:var(--surface)}
+.btn:disabled{opacity:.4}
+.btn:active:not(:disabled){transform:scale(.98)}
+.resend-note{margin-top:10px;font-size:12px;color:var(--muted)}
+.hist{margin-top:8px;display:flex;flex-direction:column;gap:0}
+.hist-row{display:flex;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:12.5px;align-items:baseline}
+.hist-row:last-child{border-bottom:none}
+.hist-row .t{color:var(--muted);flex:0 0 auto}
+.alert{display:flex;gap:8px;padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:10px;align-items:flex-start}
+.alert.warn{background:color-mix(in srgb,var(--warn) 12%,var(--surface));color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 30%,var(--line))}
+.alert.err{background:color-mix(in srgb,var(--danger) 10%,var(--surface));color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 30%,var(--line))}
+.linkline{display:flex;align-items:center;gap:8px;padding:11px 2px;border-bottom:1px solid var(--line);font-size:13.5px;text-decoration:none;color:var(--ink)}
+.linkline:last-child{border-bottom:none}
+.linkline .arrow{margin-left:auto;color:var(--muted)}
+a.linkline:visited{color:var(--ink)}
+
+/* ---------- form ---------- */
+.field{margin-bottom:14px}
+.field>label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px}
+.field input[type="text"],.field input[type="date"],.field input[type="number"],.field select,.field textarea{
+  width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);min-height:42px}
+.field textarea{min-height:64px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.shade-chips,.cat-chips{display:flex;flex-wrap:wrap;gap:6px}
+.shade-chips button,.cat-chips button{padding:7px 11px;border-radius:9px;border:1px solid var(--line);background:var(--surface);font-size:12.5px;font-weight:600}
+.shade-chips button.on,.cat-chips button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.check{display:flex;align-items:center;gap:9px;font-size:13.5px;padding:4px 0}
+.check input{width:19px;height:19px;accent-color:var(--accent)}
+.item-card{border:1.5px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:14px;margin-bottom:12px;position:relative}
+.item-card .ic-head{display:flex;align-items:center;margin-bottom:10px}
+.item-card .ic-head .t{font-weight:700;font-size:13px;color:var(--muted);letter-spacing:.06em}
+.item-card .rm{margin-left:auto;color:var(--danger);font-size:12.5px;font-weight:600;padding:4px 8px}
+.add-item{width:100%;padding:13px 0;border:1.5px dashed var(--line);border-radius:var(--radius);color:var(--accent);font-weight:700;font-size:14px;margin-bottom:14px;background:transparent}
+.due-preview{margin-top:10px;padding:9px 12px;border-radius:9px;background:color-mix(in srgb,var(--accent) 8%,var(--surface));font-size:13px;display:flex;align-items:baseline;gap:8px}
+.due-preview b{font-size:15px}
+.due-preview .src{margin-left:auto;font-size:11px;color:var(--muted)}
+.sticky-save{position:sticky;bottom:calc(64px + env(safe-area-inset-bottom));padding-top:6px;background:linear-gradient(transparent,var(--ground) 40%)}
+
+/* ---------- odontogram ---------- */
+.odn{touch-action:pan-y;user-select:none;-webkit-user-select:none;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 6px 8px}
+.odn-arch{position:relative}
+.odn-arch+.odn-arch{margin-top:10px;padding-top:10px;border-top:2px solid var(--line)}
+.odn-arch::after{content:"";position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--line);transform:translateX(-50%)}
+.odn-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.odn-grid+.odn-grid{margin-top:4px}
+.tooth{min-height:40px;min-width:0;border:1px solid var(--line);border-radius:7px;display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--muted);background:var(--ground);position:relative;z-index:1}
+.tooth.sel{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.odn-lbl{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.08em;padding:0 2px 4px}
+.odn-lbl.bottom{padding:4px 2px 0}
+.odn-readout{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-height:26px}
+.odn-readout .rt{display:flex;align-items:center;gap:4px;background:var(--surface2);border-radius:7px;padding:3px 8px;font-size:12.5px;font-weight:600}
+.odn-readout .rt button{color:var(--muted);font-size:14px;line-height:1;padding:0 1px}
+.odn-hint{font-size:11px;color:var(--muted);margin-top:8px}
+.odn-clear{font-size:12px;color:var(--accent);font-weight:700;padding:4px 6px}
+
+/* ---------- 納期表 ---------- */
+.noki-table{width:100%;border-collapse:collapse;font-size:13px}
+.noki-table th,.noki-table td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
+.noki-table td:last-child,.noki-table th:last-child{text-align:right;white-space:nowrap}
+.noki-table .cat-row td{padding-top:14px;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;border-bottom:none}
+.naka{color:var(--muted);font-size:11.5px;margin-left:6px}
+
+/* ---------- セット時フィードバック ---------- */
+.rate-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.rate-row .rl{width:5.5em;font-size:13px;font-weight:600}
+.rate-row .opts{flex:1;display:flex;gap:6px}
+.rate-row .opts button{flex:1;padding:9px 0;border-radius:9px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:14px}
+.rate-row .opts button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.rate-legend{font-size:10.5px;color:var(--muted);margin:-2px 0 10px;text-align:right}
+.fb-view{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13.5px;align-items:center}
+.fb-view .fb-l{color:var(--muted)}
+.fb-dots{letter-spacing:2px;font-weight:700}
+
+/* ---------- 帳票（指示書・保証書）: 印刷前提のため常にライト配色 ---------- */
+.doc{background:#fff;color:#1A1A1A;border:1px solid var(--line);border-radius:8px;padding:24px 20px;font-size:13px;line-height:1.7}
+.doc h1{font-size:19px;text-align:center;letter-spacing:.35em;text-indent:.35em;margin-bottom:4px;font-weight:700}
+.doc .doc-meta{display:flex;justify-content:space-between;font-size:11px;color:#555;margin-bottom:14px}
+.doc table{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:12px;table-layout:fixed}
+.doc th,.doc td{border:1px solid #8A8A8A;padding:6px 8px;text-align:left;vertical-align:top;color:#1A1A1A;word-break:break-word;overflow-wrap:anywhere}
+.doc th{background:#F1F1EE;font-weight:600;width:6.2em}
+.doc .items-tbl th{width:auto}
+.doc .items-tbl td.num{white-space:nowrap;word-break:keep-all;overflow-wrap:normal}
+.doc .note-box{border:1px solid #8A8A8A;min-height:56px;padding:6px 9px;margin-bottom:12px;white-space:pre-wrap}
+.doc .terms{font-size:11px;color:#333;margin:10px 0 14px}
+.doc .sig-area{display:flex;gap:12px;align-items:flex-end;margin-top:8px}
+.doc .sig-box{flex:1;border:1px dashed #8A8A8A;min-height:88px;display:flex;align-items:center;justify-content:center;color:#999;font-size:11px}
+.doc .sig-box img{max-height:80px;max-width:100%}
+.doc .issuer{text-align:right;font-size:12px;margin-top:14px}
+.warranty{font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif}
+.doc .fine{font-size:9.5px;color:#333;line-height:1.6;margin:8px 0}
+.doc .fine li{margin-left:1.2em;list-style:none;text-indent:-1.2em}
+.doc .sec-rule{border:none;border-top:1px solid #8A8A8A;margin:10px 0 6px}
+.doc .sec-t{font-size:10.5px;font-weight:700;text-align:center;letter-spacing:.1em;margin:8px 0 4px}
+.doc .coel{border-top:2px solid #1A1A1A;margin-top:14px;padding-top:8px;font-size:10.5px;text-align:center;line-height:1.7}
+.doc .coel b{font-size:12px;letter-spacing:.05em}
+/* 帳票内の歯式（紙の指示書と同じ十字表記）。マスは画面幅に応じて縮む */
+.dtc-wrap{margin:2px 0 4px;max-width:400px;margin-left:auto;margin-right:auto}
+.dtc-row{display:flex;align-items:center;justify-content:center;gap:2px;font-size:12px}
+.dtc-row+.dtc-row{border-top:1.5px solid #555;margin-top:3px;padding-top:3px}
+.dtc{flex:1 1 0;min-width:0;max-width:20px;text-align:center;color:#888;font-variant-numeric:tabular-nums}
+.dtc.on{background:#1A1A1A;color:#fff;border-radius:4px;font-weight:700}
+.dtc-mid{width:2px;flex:0 0 2px;align-self:stretch;background:#555;margin:0 3px}
+.doc-actions{display:flex;gap:8px;margin:12px 0}
+#sig-pad{width:100%;height:170px;border:1px solid var(--line);border-radius:10px;background:#fff;touch-action:none;display:block}
+@media print{
+  body{background:#fff}
+  .top,.nav,.toast,.modal-bg,.no-print,.doc-actions{display:none !important}
+  .shell{max-width:none;border:none;min-height:auto}
+  main{padding:0}
+  .doc{border:none;border-radius:0;padding:8mm 4mm}
+}
+
+/* ---------- toast / modal ---------- */
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom));z-index:60;
+  background:var(--ink);color:var(--ground);border-radius:11px;padding:11px 14px;display:flex;align-items:center;gap:14px;
+  font-size:13.5px;box-shadow:var(--shadow);max-width:min(92vw,400px)}
+.toast button{color:color-mix(in srgb,var(--accent) 60%,var(--ground));font-weight:700;white-space:nowrap}
+.modal-bg{position:fixed;inset:0;background:rgba(10,15,18,.45);z-index:50;display:grid;place-items:end center}
+.modal{background:var(--surface);border-radius:16px 16px 0 0;width:100%;max-width:430px;padding:18px 18px calc(18px + env(safe-area-inset-bottom))}
+.modal h3{font-size:15.5px;margin-bottom:6px}
+.modal p{font-size:13.5px;color:var(--muted);margin-bottom:14px}
+.modal .btns{display:flex;gap:8px}
+@media (prefers-reduced-motion:no-preference){
+  .toast{animation:up .18s ease-out}
+  .modal{animation:up .2s ease-out}
+  @keyframes up{from{transform:translateY(14px);opacity:.5}to{transform:translateY(0);opacity:1}}
+}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="shell" id="app"></div>
+<script>
+"use strict";
+/* =====================================================================
+   BFL技工物 UIプロトタイプ
+   データ仕様は既存スプレッドシート（技工物DB）準拠。モックデータで動作。
+   患者名・カルテ番号はすべて架空。
+===================================================================== */
+
+// ---------- マスタ ----------
+const CLINICS = ["丸の内", "浦安", "国東"];
+const CLINIC_FULL = { "丸の内": "栗林歯科医院・丸の内", "浦安": "栗林歯科医院・浦安", "国東": "栗林歯科医院・国東" };
+
+// 担当者マスタ（スプレッドシートの名簿を医院ごとに転記）
+const STAFF = {
+  "丸の内": [
+    "Dr A", "Dr B", "Dr C", "Dr D",
+    "DH A", "DH B", "DH C",
+    "DA A", "DA B", "RD A",
+  ],
+  "浦安": [
+    "Dr A", "Dr B", "Dr E", "Dr F", "Dr G",
+    "Dr H", "Dr I", "Dr J", "Dr K", "Dr L",
+    "Dr M", "Dr N", "Dr O", "Dr P", "Dr Q",
+    "Dr R", "Dr S",
+    "DH D", "DH B", "DH C", "DH E", "DH F",
+    "DH G", "DH H", "DH I",
+    "DA C", "DA D", "DA E", "DA F", "DA G",
+    "DA H", "DA I", "DA J", "DA K", "DA L",
+    "RD B", "RD C",
+  ],
+  "国東": [
+    "Dr A", "Dr T", "Dr G", "Dr D", "DA M",
+  ],
+};
+// 担当医の選択肢: 自院メンバーの下に、ヘルプで来る他院メンバーを続ける
+// 丸の内 → +浦安 / 国東 → +丸の内・浦安（全員）
+function staffGroups(clinic) {
+  const groups = [{ label: clinic, names: STAFF[clinic] || [] }];
+  const seen = new Set(STAFF[clinic] || []);
+  const helpers = clinic === "丸の内" ? ["浦安"] : clinic === "国東" ? ["丸の内", "浦安"] : [];
+  for (const c of helpers) {
+    const names = (STAFF[c] || []).filter(n => !seen.has(n));
+    names.forEach(n => seen.add(n));
+    if (names.length) groups.push({ label: `${c}（ヘルプ）`, names });
+  }
+  return groups;
+}
+
+const STATUSES = [
+  { id: 0,  name: "⓪ 医院から発送前",         short: "発送前",   color: "#F5F5F5", side: "医院", flow: 0 },
+  { id: 1,  name: "① スキャン送信済み",       short: "スキャン済", color: "#E3F2FD", side: "医院", flow: 1 },
+  { id: 2,  name: "② 医院から発送済み（模型）", short: "発送済(模型)", color: "#BBDEFB", side: "医院", flow: 1 },
+  { id: 3,  name: "③ BFL到着済み",            short: "BFL到着",  color: "#FFE0B2", side: "BFL", flow: 2 },
+  { id: 4,  name: "④ BFLから発送済み",        short: "BFL発送済", color: "#FFCC80", side: "BFL", flow: 3 },
+  { id: 5,  name: "⑤ 医院到着済み",           short: "医院到着",  color: "#C8E6C9", side: "医院", flow: 4 },
+  { id: 6,  name: "⑥ セット完了",             short: "SET済",    color: "#A5D6A7", side: "医院", flow: 5 },
+  { id: 99, name: "⚠️ 要再送",                short: "要再送",   color: "#FFCDD2", side: "BFL", flow: -1 },
+];
+const ST = Object.fromEntries(STATUSES.map(s => [s.id, s]));
+// ステータス到達時に自動スタンプする日付フィールド
+const STAMP_FIELD = { 3: "bflArrival", 4: "bflShip", 5: "delivered", 6: "setDone" };
+
+const SHADES = ["A1","A2","A3","A3.5","A4","B1","B2","B3","B4","C1","C2","C3","C4","D2","D3","D4","写真あり","前回と同じ"];
+
+// 補綴物マスタ（既存DBの品目 + BFL納期表の「中X日」）
+// naka: 納期表の中X日（営業日）/ cal: 暦日計算（印象日からX日）/ price: 技工料金
+// est=true は納期表に掲載がなく既存マスタの日数を目安として使う品目
+const PROSTHETICS = [
+  { id: 1,  cat: "基本補綴",   name: "Fコア",                    naka: 6,  price: 5000,  sig: false },
+  { id: 2,  cat: "プロビ",     name: "プロビ（1〜2本）",          naka: 6,  price: 3000,  sig: false },
+  { id: 3,  cat: "プロビ",     name: "プロビ（3〜5本）",          naka: 8,  price: null,  sig: false },
+  { id: 4,  cat: "プロビ",     name: "プロビ（6〜10本）",         naka: 10, price: null,  sig: false },
+  { id: 5,  cat: "プロビ",     name: "プロビBr（3本）",           naka: 9,  price: 1000,  sig: false, note: "4本→中10日 / 5本→中11日" },
+  { id: 8,  cat: "プロビ",     name: "ウィング付きプロビ",        naka: 7,  price: 5000,  sig: false, est: true },
+  { id: 6,  cat: "プロビコア", name: "プロビコア（1〜3本）",      naka: 5,  price: null,  sig: false },
+  { id: 7,  cat: "プロビコア", name: "プロビコア（4本以上）",     naka: 6,  price: null,  sig: false },
+  { id: 9,  cat: "義歯・装置", name: "NG（ナイトガード ソフト）", naka: 5,  price: 5000,  sig: false, noTeeth: true },
+  { id: 10, cat: "義歯・装置", name: "NGハード（ナイトガード ハード）", naka: 5, price: 5000, sig: false, noTeeth: true },
+  { id: 11, cat: "義歯・装置", name: "バイオスター",              naka: 5,  price: 8000,  sig: false, noTeeth: true },
+  { id: 12, cat: "義歯・装置", name: "バイオスター（装置OFF後の早め）", naka: 5, price: 9600, sig: false, noTeeth: true },
+  { id: 13, cat: "義歯・装置", name: "BC（バイトプレート）",      naka: 5,  price: 8000,  sig: false, noTeeth: true },
+  { id: 14, cat: "義歯・装置", name: "ホワイトニングトレー",      naka: 6,  price: 5000,  sig: false, noTeeth: true },
+  { id: 15, cat: "義歯・装置", name: "咬合床",                    naka: 6,  price: 1500,  sig: false, noTeeth: true },
+  { id: 16, cat: "義歯・装置", name: "個人トレー",                naka: 6,  price: 1500,  sig: false, noTeeth: true },
+  { id: 18, cat: "義歯・装置", name: "スプリント",                naka: 13, price: 10000, sig: false, noTeeth: true },
+  { id: 19, cat: "義歯・装置", name: "スポーツマウスガード",      naka: 5,  price: 5000,  sig: false, noTeeth: true, est: true },
+  { id: 20, cat: "義歯・装置", name: "無呼吸用マウスピース",      naka: 7,  price: 5000,  sig: false, noTeeth: true, est: true },
+  { id: 21, cat: "インレー",   name: "インレー e-max",            naka: 11, price: 22000, kunisaki: 18000, sig: true },
+  { id: 22, cat: "インレー",   name: "インレー ジルコニア",       naka: 9,  price: 22000, kunisaki: 13000, sig: true },
+  { id: 24, cat: "前歯",       name: "前歯 e-max",                naka: 15, price: 32000, sig: true },
+  { id: 25, cat: "前歯",       name: "前歯 ジルコニア",           naka: 13, price: 32000, kunisaki: 20000, sig: true },
+  { id: 26, cat: "前歯",       name: "前歯 CADCAM",               naka: 6,  price: 12000, kunisaki: 12000, sig: false },
+  { id: 27, cat: "前歯",       name: "前歯 セラミックス＆ジルコニア（レイヤリング）", naka: 15, price: 52000, sig: true },
+  { id: 28, cat: "クラウン",   name: "クラウン e-max",            naka: 11, price: 22000, kunisaki: 18000, sig: true },
+  { id: 29, cat: "クラウン",   name: "クラウン ジルコニア",       naka: 9,  price: 22000, kunisaki: 18000, sig: true },
+  { id: 30, cat: "クラウン",   name: "CADCAM冠 小臼歯",           naka: 6,  price: 9000,  kunisaki: 7500, sig: false },
+  { id: 31, cat: "クラウン",   name: "CADCAM冠 大臼歯",           naka: 6,  price: 11000, kunisaki: 10000, sig: false },
+  { id: 32, cat: "ブリッジ前歯", name: "ブリッジ前歯 プレミアム/スタンダード（レイヤリング）", naka: 15, price: null, sig: true },
+  { id: 33, cat: "ブリッジ前歯", name: "ブリッジ前歯 オールジルコニア", naka: 15, price: null, sig: true },
+  { id: 34, cat: "ブリッジ臼歯", name: "ブリッジ臼歯 プレミアム（レイヤリング）", naka: 15, price: null, sig: true },
+  { id: 35, cat: "ブリッジ臼歯", name: "ブリッジ臼歯 オールセラミックス", naka: 15, price: null, sig: true },
+  { id: 36, cat: "ブリッジ臼歯", name: "ブリッジ臼歯 オールジルコニア", naka: 13, price: null, sig: true },
+  { id: 37, cat: "インプラント", name: "オープントレー",          naka: 6,  price: 3000,  sig: false, noTeeth: true },
+  { id: 38, cat: "インプラント", name: "インプラントプロビ",      naka: 9,  price: 8000,  sig: false, note: "前歯は9000円" },
+  { id: 39, cat: "インプラント", name: "シムプラントガイド（診断用ワックスアップ1歯）", naka: 7, price: 2000, sig: false },
+  { id: 40, cat: "インプラント", name: "BFLガイド（レディオグラフィックステント）", naka: 12, price: 6000, sig: false },
+  { id: 41, cat: "インプラント", name: "セレックガイド",          naka: 16, price: 12000, sig: false },
+  { id: 42, cat: "インプラント", name: "BFLガイド＋セレックガイド 両方", naka: 32, price: 18000, sig: false },
+  { id: 43, cat: "インプラント", name: "即時プロビ",              naka: 11, price: 15000, sig: false },
+  { id: 44, cat: "インプラント", name: "インプラント用レジンアップ", naka: 14, price: 1800, sig: false, est: true },
+  { id: 45, cat: "インプラント上部", name: "インプラント上部 前歯（レイヤリング/ジルコニア）", naka: 15, price: 50000, sig: true },
+  { id: 46, cat: "インプラント上部", name: "インプラント上部 臼歯（レイヤリング/ジルコニア）", naka: 15, price: 40000, sig: true },
+  { id: 47, cat: "インプラント上部", name: "インプラントBr",      naka: 19, price: null, sig: true, note: "6本以上はBFLに相談" },
+  { id: 48, cat: "矯正",       name: "バンド",                    naka: 6,  price: 2000,  sig: false },
+  { id: 49, cat: "矯正",       name: "矯正装置",                  cal: 21,  price: null,  sig: false, noTeeth: true, note: "印象日から3週間（暦日）" },
+  { id: 50, cat: "矯正",       name: "模型付着",                  cal: 14,  price: null,  sig: false, noTeeth: true, note: "印象日から2週間（暦日）" },
+  { id: 51, cat: "その他",     name: "診断用ワックスアップ（片顎フルマウス）", naka: 14, price: 2000, sig: false, noTeeth: true },
+  { id: 52, cat: "その他",     name: "エクストリュージョン用ワイヤー", naka: 12, price: 1500, sig: false },
+  { id: 53, cat: "その他",     name: "移植レプリカ",              naka: 4,  price: 8000,  sig: false, est: true },
+  { id: 54, cat: "その他",     name: "ガラスセラミックス Cr",     naka: 6,  price: 15000, kunisaki: 13000, sig: true, est: true },
+  { id: 55, cat: "その他",     name: "ラミネートベニア",          naka: 14, price: 30000, sig: true, est: true },
+  { id: 56, cat: "その他",     name: "調整",                      naka: 7,  price: null,  sig: false, est: true },
+  { id: 57, cat: "その他",     name: "修正",                      naka: 7,  price: null,  sig: false, est: true },
+  { id: 58, cat: "その他",     name: "模型製作／3Dプリンター",    naka: 5,  price: 3000,  sig: false, noTeeth: true, est: true },
+  { id: 59, cat: "その他",     name: "レジンアップ",              naka: 5,  price: 1800,  sig: false, est: true },
+  { id: 60, cat: "その他",     name: "イレギュラー",              naka: null, price: null, sig: false, note: "納期はBFLと相談" },
+];
+const CATEGORIES = [...new Set(PROSTHETICS.map(p => p.cat))];
+const PRO = Object.fromEntries(PROSTHETICS.map(p => [p.id, p]));
+
+// BFL休業日（デモ用の概算カレンダー。本番は納期表マスタ／BFLカレンダーから取得）
+const LAB_CLOSED = new Set([
+  "2026-07-20",                                               // 海の日
+  "2026-08-10","2026-08-11","2026-08-12","2026-08-13","2026-08-14", // 盆休み
+  "2026-09-21","2026-09-22","2026-09-23",                     // 敬老の日・秋分
+  "2026-10-12","2026-11-03","2026-11-23",
+  "2026-12-29","2026-12-30","2026-12-31","2027-01-01","2027-01-02","2027-01-03","2027-01-04",
+]);
+
+// 納期表PDF（Google Drive・実ファイル）
+const NOKI_PDFS = {
+  "丸の内": [
+    { label: "8月（0717ver）", url: "#demo-no-link" },
+    { label: "7月（0703ver）", url: "#demo-no-link" },
+    { label: "6月（0413ver）", url: "#demo-no-link" },
+  ],
+  "浦安": [
+    { label: "8月（0717ver）", url: "#demo-no-link" },
+    { label: "7月（0703ver）", url: "#demo-no-link" },
+    { label: "6月（0413ver）", url: "#demo-no-link" },
+  ],
+  "国東": [
+    { label: "8月（0717ver）", url: "#demo-no-link" },
+    { label: "7月（0703ver）", url: "#demo-no-link" },
+    { label: "6月（0413ver）", url: "#demo-no-link" },
+  ],
+};
+const DRIVE_FOLDER = "#demo-no-link";
+// シェード写真（一眼）の保存先フォルダ。本番接続時に医院ごとのフォルダIDを設定する
+const SHADE_PHOTO_FOLDERS = { "丸の内": "", "浦安": "", "国東": "" };
+
+// 納期表の中X日は医院×月ごとにPDFが発行される。現状は丸の内8月版(0717ver)を転記済み。
+// 他院の値は本番で各院のPDFから取り込む（未転記の間は丸の内版を参考値として表示）
+const NAKA_SOURCE = { "丸の内": "納期表準拠（8月 0717ver）", "浦安": "参考値（丸の内8月版）", "国東": "参考値（丸の内8月版）" };
+function nakaSrcLabel(p, clinic) {
+  if (!p) return "";
+  if (p.cal) return "暦日計算";
+  if (p.naka == null) return "納期はBFLと相談";
+  if (p.est) return `目安・中${p.naka}日（納期表未掲載）`;
+  return `${NAKA_SOURCE[clinic] || "納期表"}・中${p.naka}日`;
+}
+
+// ---------- 日付ユーティリティ ----------
+const fmtISO = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const parseISO = s => { const [y,m,dd] = s.split("-").map(Number); return new Date(y, m-1, dd, 12); };
+const WD = ["日","月","火","水","木","金","土"];
+function fmtJP(iso, withWd = true) {
+  if (!iso) return "—";
+  const d = parseISO(iso);
+  return `${d.getMonth()+1}/${d.getDate()}${withWd ? `（${WD[d.getDay()]}）` : ""}`;
+}
+function fmtJPFull(iso) {
+  if (!iso) return "—";
+  const d = parseISO(iso);
+  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+}
+function todayISO() { return fmtISO(new Date()); }
+function isBiz(d) { const w = d.getDay(); return w !== 0 && w !== 6 && !LAB_CLOSED.has(fmtISO(d)); }
+function shiftDay(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function prevBiz(d) { let x = new Date(d); while (!isBiz(x)) x = shiftDay(x, -1); return x; }
+function addBiz(d, n) { let x = new Date(d), c = 0; while (c < n) { x = shiftDay(x, 1); if (isBiz(x)) c++; } return x; }
+// 納品日 = 発送日（休業日なら直前の営業日扱い）から中naka営業日空けた翌営業日
+function deliveryISO(shipISO, pros, impressionISO) {
+  if (!pros) return null;
+  if (pros.cal) {
+    const base = impressionISO || shipISO;
+    return base ? fmtISO(shiftDay(parseISO(base), pros.cal)) : null;
+  }
+  if (pros.naka == null || !shipISO) return null;
+  return fmtISO(addBiz(prevBiz(parseISO(shipISO)), pros.naka + 1));
+}
+function daysUntil(iso) {
+  return Math.round((parseISO(iso) - parseISO(todayISO())) / 86400000);
+}
+
+// ---------- 歯式 ----------
+// 既存DBの表記順（右上→左上→右下→左下、各象限は1→8の昇順）に合わせる
+const QUAD_RANK = { "右上": 0, "左上": 1, "右下": 2, "左下": 3 };
+function toothKeyRank(t) {
+  const q = t.slice(0, 2), n = Number(t.slice(2));
+  return (QUAD_RANK[q] ?? 9) * 10 + n;
+}
+function sortTeeth(list) { return [...list].sort((a, b) => toothKeyRank(a) - toothKeyRank(b)); }
+
+// ---------- モックデータ（患者はすべて架空） ----------
+const SEED_VERSION = 4;
+function seedOrders() {
+  return [
+    {
+      no: "20260722-0002", clinic: "丸の内", doctor: "Dr B", karte: "M01234", patient: "サトウ ハナコ",
+      items: [
+        { prosId: 29, teeth: ["右上5"], shade: "A3", qty: 1, photoInDrive: true },
+        { prosId: 21, teeth: ["右上6"], shade: "A3", qty: 1, photoInDrive: true },
+      ],
+      note: "セメントはいつも通りで。", impressionDate: "2026-07-22", shipDate: "2026-07-22",
+      apptDate: "2026-08-07", status: 3, dates: { bflArrival: "2026-07-24" },
+      history: [
+        { at: "2026-07-22 18:02", from: 0, to: 1, by: "丸の内" },
+        { at: "2026-07-24 09:15", from: 1, to: 3, by: "BFL" },
+      ],
+    },
+    {
+      no: "20260718-0001", clinic: "丸の内", doctor: "Dr C", karte: "M02001", patient: "タナカ イチロウ",
+      items: [{ prosId: 24, teeth: ["右上1","左上1"], shade: "写真あり", qty: 2, photoInDrive: true }],
+      note: "写真はDriveのシェードフォルダに。", impressionDate: "2026-07-17", shipDate: "2026-07-18",
+      apptDate: "2026-08-05", status: 3, dates: { bflArrival: "2026-07-20" },
+      history: [
+        { at: "2026-07-18 17:40", from: 0, to: 1, by: "丸の内" },
+        { at: "2026-07-20 09:05", from: 1, to: 3, by: "BFL" },
+      ],
+    },
+    {
+      no: "20260715-0003", clinic: "丸の内", doctor: "Dr A", karte: "M01777", patient: "ヤマモト ミドリ",
+      items: [{ prosId: 5, teeth: ["左上5","左上6","左上7"], shade: "", qty: 3, photoInDrive: false }],
+      note: "特急でお願いします。", impressionDate: "2026-07-15", shipDate: "2026-07-15",
+      apptDate: "2026-07-22", status: 4, dates: { bflArrival: "2026-07-16", bflShip: "2026-07-27" },
+      history: [
+        { at: "2026-07-15 16:20", from: 0, to: 1, by: "丸の内" },
+        { at: "2026-07-16 09:30", from: 1, to: 3, by: "BFL" },
+        { at: "2026-07-23 15:00", from: 3, to: 4, by: "BFL" },
+      ],
+    },
+    {
+      no: "20260714-0001", clinic: "丸の内", doctor: "Dr B", karte: "M00988", patient: "スズキ ケンタ",
+      items: [{ prosId: 30, teeth: ["左下5"], shade: "A2", qty: 1, photoInDrive: false }],
+      note: "", impressionDate: "2026-07-14", shipDate: "2026-07-14",
+      apptDate: "2026-07-28", status: 5, dates: { bflArrival: "2026-07-15", bflShip: "2026-07-21", delivered: "2026-07-22" },
+      history: [
+        { at: "2026-07-14 13:00", from: 0, to: 2, by: "丸の内" },
+        { at: "2026-07-15 09:00", from: 2, to: 3, by: "BFL" },
+        { at: "2026-07-21 14:00", from: 3, to: 4, by: "BFL" },
+        { at: "2026-07-22 10:30", from: 4, to: 5, by: "丸の内" },
+      ],
+    },
+    {
+      no: "20260710-0002", clinic: "丸の内", doctor: "Dr C", karte: "M02310", patient: "ワタナベ アヤ",
+      items: [{ prosId: 26, teeth: ["左上2"], shade: "A1", qty: 1, photoInDrive: false }],
+      note: "印象再送になった案件。", impressionDate: "2026-07-10", shipDate: "2026-07-10",
+      apptDate: "2026-08-01", status: 99, dates: { bflArrival: "2026-07-12" },
+      history: [
+        { at: "2026-07-10 15:00", from: 0, to: 2, by: "丸の内" },
+        { at: "2026-07-12 09:00", from: 2, to: 3, by: "BFL" },
+        { at: "2026-07-13 11:20", from: 3, to: 99, by: "BFL", note: "印象不備のため再印象をお願いします" },
+      ],
+    },
+    {
+      no: "20260701-0001", clinic: "丸の内", doctor: "Dr B", karte: "M01502", patient: "コバヤシ ナオ",
+      items: [{ prosId: 28, teeth: ["右下6"], shade: "A3.5", qty: 1, photoInDrive: false }],
+      note: "", impressionDate: "2026-07-01", shipDate: "2026-07-01",
+      apptDate: "2026-07-18", status: 6,
+      dates: { bflArrival: "2026-07-02", bflShip: "2026-07-15", delivered: "2026-07-16", setDone: "2026-07-18" },
+      warrantyStart: "2026-07-18", warrantyEnd: "2031-07-17",
+      history: [
+        { at: "2026-07-01 12:00", from: 0, to: 1, by: "丸の内" },
+        { at: "2026-07-02 09:00", from: 1, to: 3, by: "BFL" },
+        { at: "2026-07-15 15:00", from: 3, to: 4, by: "BFL" },
+        { at: "2026-07-16 10:00", from: 4, to: 5, by: "丸の内" },
+        { at: "2026-07-18 18:10", from: 5, to: 6, by: "丸の内" },
+      ],
+    },
+    {
+      no: "20260723-0001", clinic: "浦安", doctor: "Dr G", karte: "U00432", patient: "ナカムラ ソウタ",
+      items: [{ prosId: 10, teeth: [], shade: "", qty: 1, photoInDrive: false }],
+      note: "", impressionDate: "2026-07-23", shipDate: "",
+      apptDate: "2026-08-08", status: 0, dates: {}, history: [],
+    },
+    {
+      no: "20260724-0001", clinic: "丸の内", doctor: "Dr B", karte: "M02456", patient: "イトウ サクラ",
+      items: [{ prosId: 2, teeth: ["右上4"], shade: "", qty: 1, photoInDrive: false }],
+      note: "", impressionDate: "2026-07-24", shipDate: "",
+      apptDate: "", status: 0, dates: {}, history: [],
+    },
+  ];
+}
+
+// ---------- 状態 ----------
+const LS_KEY = "bfl-ui-proto";
+let db = load();
+function load() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(LS_KEY));
+    if (raw && raw.seedVersion === SEED_VERSION) { raw.orders.forEach(migrate); return raw; }
+  } catch (e) { /* 破損時は初期化 */ }
+  const fresh = { seedVersion: SEED_VERSION, orders: seedOrders() };
+  fresh.orders.forEach(migrate);
+  return fresh;
+}
+function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(db)); } catch (e) { /* 容量超過などは無視 */ } }
+
+const state = {
+  view: "home",          // home | detail | new | noki
+  clinic: "丸の内",
+  filter: "all",         // all | status id
+  search: "",
+  searchOpen: false,
+  orderNo: null,
+  nokiShip: todayISO(),
+  toast: null,
+};
+let draft = null;        // 新規発注フォームの下書き
+let toastTimer = null;
+
+// ---------- 共通ヘルパ ----------
+const $ = sel => document.querySelector(sel);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+function statusPill(id) {
+  const s = ST[id];
+  return `<span class="status-pill" style="background:${s.color}">${esc(s.name)}</span>`;
+}
+function orderDelivery(o) {
+  // 発注全体の納期 = 明細の納品日の最遅
+  let latest = null;
+  for (const it of o.items) {
+    const d = deliveryISO(o.shipDate || o.impressionDate || null, PRO[it.prosId], o.impressionDate);
+    if (d && (!latest || d > latest)) latest = d;
+  }
+  return latest;
+}
+function itemDelivery(o, it) {
+  return deliveryISO(o.shipDate || o.impressionDate || null, PRO[it.prosId], o.impressionDate);
+}
+function itemPrice(o, it) {
+  const p = PRO[it.prosId]; if (!p) return null;
+  const unit = (o.clinic === "国東" && p.kunisaki != null) ? p.kunisaki : p.price;
+  return unit == null ? null : unit * (it.qty || 1);
+}
+function nowStamp() {
+  const d = new Date();
+  return `${fmtISO(d)} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+}
+function findOrder(no) { return db.orders.find(o => o.no === no); }
+
+// ---------- ステータス遷移 ----------
+function applyStatus(o, to, note) {
+  const from = o.status;
+  // 自動スタンプ。変更前の値はundoStackへ（JSON保存で消えないようnullで保持）
+  const undo = {};
+  if (to === 1 || to === 2) {
+    undo.shipDate = o.shipDate ?? null;
+    if (from === 99) {
+      // 再送: 発送日を今日に更新し、前回分のBFL側日付をリセット
+      o.shipDate = todayISO();
+      for (const k of ["bflArrival", "bflShip", "delivered"]) { undo[k] = o.dates[k] ?? null; o.dates[k] = null; }
+    } else if (!o.shipDate) {
+      o.shipDate = todayISO();
+    }
+  }
+  const f = STAMP_FIELD[to];
+  if (f) { undo[f] = o.dates[f] ?? null; if (!o.dates[f]) o.dates[f] = todayISO(); }
+  if (to === 6) {
+    undo.warrantyStart = o.warrantyStart ?? null; undo.warrantyEnd = o.warrantyEnd ?? null;
+    if (o.items.some(it => PRO[it.prosId]?.sig)) {
+      const s = parseISO(o.dates.setDone || todayISO());
+      const e = new Date(s); e.setFullYear(e.getFullYear() + 5); e.setDate(e.getDate() - 1);
+      o.warrantyStart = fmtISO(s); o.warrantyEnd = fmtISO(e);
+    }
+  }
+  o.status = to;
+  const entry = { at: nowStamp(), from, to, by: o.clinic };
+  if (note) entry.note = note;
+  o.history.push(entry);
+  o.undoStack.push({ from, undo });
+  save();
+}
+// 直前の変更を取り消す。履歴は消さず「取り消し」の行として追記する（監査ログを維持）
+function undoLast(o, label) {
+  const u = o.undoStack.pop();
+  if (!u) return false;
+  const cur = o.status;
+  const ud = u.undo || {};
+  if ("shipDate" in ud) o.shipDate = ud.shipDate;
+  for (const k of ["bflArrival", "bflShip", "delivered", "setDone"]) if (k in ud) o.dates[k] = ud[k];
+  if ("warrantyStart" in ud) { o.warrantyStart = ud.warrantyStart; o.warrantyEnd = ud.warrantyEnd; }
+  o.status = u.from;
+  o.history.push({ at: nowStamp(), from: cur, to: u.from, by: o.clinic, note: label || "取り消し" });
+  save();
+  return true;
+}
+// 既存データ移行: undoStackが無い注文は履歴から復元（スタンプは既定値でクリア）
+function defaultUndo(to) {
+  const undo = {};
+  if (STAMP_FIELD[to]) undo[STAMP_FIELD[to]] = null;
+  if (to === 6) { undo.warrantyStart = null; undo.warrantyEnd = null; }
+  return undo;
+}
+function migrate(o) {
+  if (!Array.isArray(o.undoStack)) {
+    o.undoStack = (o.history || []).filter(h => ST[h.to] && ST[h.from]).map(h => ({ from: h.from, undo: defaultUndo(h.to) }));
+  }
+  return o;
+}
+function nextOptions(o) {
+  // 戻り値: [{to, label}]
+  switch (o.status) {
+    case 0:  return [{ to: 1, label: "① スキャン送信済みにする" }, { to: 2, label: "② 模型を発送済みにする" }];
+    case 1:
+    case 2:  return [{ to: 3, label: "③ BFL到着済みにする" }];
+    case 3:  return [{ to: 4, label: "④ BFLから発送済みにする" }];
+    case 4:  return [{ to: 5, label: "⑤ 医院到着済みにする" }];
+    case 5:  return [{ to: 6, label: "⑥ セット完了にする" }];
+    case 99: return [{ to: 1, label: "① 再スキャン送信済みにする" }, { to: 2, label: "② 模型を再発送済みにする" }];
+    default: return [];
+  }
+}
+
+// ---------- トースト ----------
+function showToast(msg, undoFn) {
+  state.toast = { msg, undoFn };
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { state.toast = null; render(); }, 6000);
+  render();
+}
+
+// ---------- SVGアイコン ----------
+const IC = {
+  list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.2" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18" r="1.2" fill="currentColor" stroke="none"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
+  ext: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>',
+};
+
+// ---------- 描画: ホーム ----------
+function homeFiltered() {
+  const q = state.search.trim();
+  let orders = db.orders.filter(o => o.clinic === state.clinic && !o.deleted);
+  if (q) {
+    orders = orders.filter(o =>
+      o.patient.includes(q) || o.karte.toLowerCase().includes(q.toLowerCase()) || o.no.includes(q));
+  }
+  return orders;
+}
+function homeChipsHTML(orders) {
+  const counts = {};
+  for (const o of orders) counts[o.status] = (counts[o.status] || 0) + 1;
+  return [
+    `<button class="chip ${state.filter === "all" ? "on" : ""}" data-filter="all">全て <span class="n num">${orders.length}</span></button>`,
+    ...STATUSES.map(s =>
+      `<button class="chip ${state.filter == s.id ? "on" : ""}" data-filter="${s.id}">
+        <span class="dot" style="background:${s.color}"></span>${esc(s.short)} <span class="n num">${counts[s.id] || 0}</span>
+      </button>`),
+  ].join("");
+}
+function homeCardsHTML(orders) {
+  const shown = state.filter === "all" ? orders : orders.filter(o => o.status === Number(state.filter));
+  shown.sort((a, b) => {
+    const da = orderDelivery(a) || "9999", dbb = orderDelivery(b) || "9999";
+    return da < dbb ? -1 : da > dbb ? 1 : 0;
+  });
+
+  const cards = shown.map(o => {
+    const due = orderDelivery(o);
+    const dd = due ? daysUntil(due) : null;
+    const late = due && dd < 0 && o.status < 5 && o.status !== 99;
+    const soon = due && dd >= 0 && dd <= 3 && o.status < 5 && o.status !== 99;
+    const conflict = due && o.apptDate && due > o.apptDate && o.status < 5;
+    return `<button class="card order-card" data-open="${o.no}">
+      <div class="oc-top">
+        <span class="oc-name">${esc(o.patient)}</span>
+        <span class="oc-karte num">${esc(o.karte)}</span>
+        <span class="oc-no num">${esc(o.no)}</span>
+      </div>
+      <div class="oc-items">${o.items.map(it => {
+        const p = PRO[it.prosId];
+        return `<div class="oc-item"><span>${esc(p ? p.name : "?")}</span>${it.teeth.length ? `<span class="teeth-tag">${esc(sortTeeth(it.teeth).join("・"))}</span>` : ""}${it.shade ? `<span class="teeth-tag">${esc(it.shade)}</span>` : ""}</div>`;
+      }).join("")}</div>
+      <div>${statusPill(o.status)}</div>
+      <div class="oc-foot">
+        <span>納期 <span class="due num">${fmtJP(due)}</span></span>
+        ${late ? '<span class="badge late">納期超過</span>' : ""}
+        ${soon ? '<span class="badge soon">あと' + dd + "日</span>" : ""}
+        ${conflict ? '<span class="badge conflict">予約日より後</span>' : ""}
+        ${o.apptDate ? `<span>予約 <span class="num">${fmtJP(o.apptDate, false)}</span></span>` : ""}
+      </div>
+    </button>`;
+  }).join("");
+  return shown.length ? cards : '<div class="empty">該当する案件がありません</div>';
+}
+function viewHome() {
+  const orders = homeFiltered();
+  return `
+  <div class="top">
+    <div class="top-row">
+      <div class="brand">技工物<small>BFL Lab Works — DEMO</small></div>
+      <div class="top-actions">
+        <button class="icon-btn" data-act="toggle-search" aria-label="検索">${IC.search}</button>
+      </div>
+    </div>
+    <div class="seg">${CLINICS.map(c => `<button class="${state.clinic === c ? "on" : ""}" data-clinic="${c}">${c}</button>`).join("")}</div>
+    <div class="searchbar ${state.searchOpen ? "show" : ""}"><input id="search-in" type="search" placeholder="患者名・カルテ番号・発注番号" value="${esc(state.search)}"></div>
+    <div class="chips" id="home-chips">${homeChipsHTML(orders)}</div>
+  </div>
+  <main>
+    <div id="home-list">${homeCardsHTML(orders)}</div>
+    <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:18px">
+      プロトタイプ（モックデータ・患者名は架空）　<button data-act="reset-demo" style="color:var(--accent);font-weight:700">データをリセット</button>
+    </p>
+  </main>`;
+}
+
+// ---------- 描画: 詳細 ----------
+function viewDetail() {
+  const o = findOrder(state.orderNo);
+  if (!o) { state.view = "home"; return viewHome(); }
+  const s = ST[o.status];
+  const due = orderDelivery(o);
+  const conflict = due && o.apptDate && due > o.apptDate && o.status < 5;
+
+  const flowSteps = [ST[0], ST[o.history.some(h => h.to === 2) || o.status === 2 ? 2 : 1], ST[3], ST[4], ST[5], ST[6]];
+  const curFlow = o.status === 99 ? -1 : ST[o.status].flow;
+  const stepper = o.status === 99
+    ? `<div class="alert err"><span>⚠️</span><div><b>要再送</b><br>${esc(o.history.at(-1)?.note || "BFLから再送依頼が届いています")}</div></div>`
+    : `<div class="stepper">${flowSteps.map((st, i) =>
+        `<div class="step ${i < curFlow ? "done" : i === curFlow ? "now" : ""}">
+          <div class="bub">${i < curFlow ? "✓" : esc(st.name.slice(0, 1))}</div>
+          <div class="lb">${esc(st.short)}</div>
+        </div>`).join("")}</div>`;
+
+  const opts = nextOptions(o);
+  const actions = `
+    <div class="status-actions" style="flex-direction:column">
+      ${opts.map(op => `<button class="btn primary" data-status-to="${op.to}">${esc(op.label)} →</button>`).join("")}
+      <div style="display:flex;gap:8px">
+        <button class="btn ghost" data-act="status-back" ${o.undoStack.length ? "" : "disabled"}>← ひとつ戻す</button>
+        ${(o.status === 3 || o.status === 4) ? '<button class="btn danger-ghost" data-act="resend">⚠️ 要再送にする</button>' : ""}
+      </div>
+    </div>
+    <p class="resend-note">間違えて進めても「ひとつ戻す」でいつでも戻せます。すべての変更は履歴に残ります。</p>`;
+
+  const items = o.items.map((it, i) => {
+    const p = PRO[it.prosId];
+    const d = itemDelivery(o, it);
+    const price = itemPrice(o, it);
+    return `<div class="item-block">
+      <div class="ib-name">${esc(p ? p.name : "?")}</div>
+      <div class="ib-row">
+        ${it.teeth.length ? `<span class="teeth-tag">${esc(sortTeeth(it.teeth).join("・"))}</span>` : "<span>部位なし</span>"}
+        ${it.shade ? `<span class="teeth-tag">シェード ${esc(it.shade)}</span>` : ""}
+        <span>${it.qty}本</span>
+        ${price != null ? `<span class="num">¥${price.toLocaleString()}</span>` : ""}
+      </div>
+      <div class="ib-row">納期 <b class="num" style="color:var(--ink)">${fmtJP(d)}</b><span class="naka">${esc(nakaSrcLabel(p, o.clinic))}</span>
+        ${it.photoInDrive ? '<span class="teeth-tag">📷 シェード写真: Driveにあり</span>' : ""}</div>
+    </div>`;
+  }).join("");
+
+  const histRows = [...o.history].reverse().map(h =>
+    `<div class="hist-row"><span class="t num">${esc(h.at)}</span>
+     <span>${esc(ST[h.from].short)} → <b>${esc(ST[h.to].short)}</b>${h.note ? `<br><span style="color:var(--muted)">${esc(h.note)}</span>` : ""}</span></div>`).join("");
+
+  return `
+  <div class="top">
+    <div class="back-row">
+      <button class="icon-btn" data-act="go-home" aria-label="戻る">${IC.back}</button>
+      <div>
+        <div class="title">${esc(o.patient)} <span class="oc-karte num">${esc(o.karte)}</span></div>
+        <div style="font-size:11px;color:var(--muted)" class="num">${esc(o.no)} ・ ${esc(CLINIC_FULL[o.clinic] || o.clinic)}</div>
+      </div>
+    </div>
+  </div>
+  <main>
+    ${conflict ? `<div class="alert warn"><span>⚠️</span><div>予定納期（${fmtJP(due)}）が患者予約日（${fmtJP(o.apptDate)}）より後です。予約変更または納期をBFLに相談してください。</div></div>` : ""}
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px">${statusPill(o.status)}<span style="font-size:11px;color:var(--muted)">担当: ${esc(s.side)}</span></div>
+      ${stepper}
+      ${actions}
+    </div>
+
+    <div class="section-label">技工物（${o.items.length}件）</div>
+    <div class="card" style="padding-top:6px">${items}</div>
+
+    <div class="section-label">日付</div>
+    <div class="card">
+      <dl class="kv">
+        <dt>印象日</dt><dd class="num">${fmtJP(o.impressionDate)}</dd>
+        <dt>医院発送日</dt><dd class="num">${fmtJP(o.shipDate)}</dd>
+        <dt>予定納期（明細の最遅）</dt><dd class="num"><b>${fmtJP(due)}</b></dd>
+        <dt>患者予約日</dt><dd class="num">${fmtJP(o.apptDate)}</dd>
+        <dt>BFL到着日</dt><dd class="num">${fmtJP(o.dates.bflArrival)}</dd>
+        <dt>BFL発送日</dt><dd class="num">${fmtJP(o.dates.bflShip)}</dd>
+        <dt>医院到着（納品）日</dt><dd class="num">${fmtJP(o.dates.delivered)}</dd>
+        <dt>セット完了日</dt><dd class="num">${fmtJP(o.dates.setDone)}</dd>
+        ${o.warrantyStart ? `<dt>BFL保証</dt><dd class="num">${fmtJPFull(o.warrantyStart)} 〜 ${fmtJPFull(o.warrantyEnd)}</dd>` : ""}
+      </dl>
+    </div>
+
+    ${o.status === 6 || o.feedback ? `
+    <div class="section-label">セット時フィードバック（BFLへ）</div>
+    <div class="card">
+      ${o.feedback ? `<div class="fb-view">
+        ${FB_ITEMS.map(([k, label]) => `<span class="fb-l">${label}</span><span class="fb-dots num">${fbDots(o.feedback[k])}</span>`).join("")}
+        ${o.feedback.comment ? `<span class="fb-l">コメント</span><span>${esc(o.feedback.comment)}</span>` : ""}
+        <span class="fb-l">セット時写真</span><span>${o.feedback.photoInDrive ? "📷 Driveにあり" : "なし"}</span>
+      </div>
+      <button class="btn ghost" style="margin-top:12px;width:100%" data-act="fb-open">フィードバックを編集</button>`
+      : `<button class="btn primary" style="width:100%" data-act="fb-open">フィードバックを入力</button>`}
+    </div>` : ""}
+
+    ${o.note ? `<div class="section-label">Drコメント・備考</div><div class="card" style="font-size:13.5px">${esc(o.note)}</div>` : ""}
+
+    <div class="section-label">書類・リンク</div>
+    <div class="card" style="padding-top:2px;padding-bottom:2px">
+      <button class="linkline" style="width:100%;text-align:left" data-doc="sheet">📋 技工指示書（表示・印刷・PDF保存）<span class="arrow">→</span></button>
+      ${o.items.some(it => PRO[it.prosId]?.sig) ? `<button class="linkline" style="width:100%;text-align:left" data-doc="warranty">📜 保証書${o.signature ? "（署名済み）" : ""}<span class="arrow">→</span></button>` : ""}
+      <a class="linkline" href="${esc((NOKI_PDFS[o.clinic] || [])[0]?.url || DRIVE_FOLDER)}" target="_blank" rel="noopener">📄 納期表PDF（${esc(o.clinic)}・デモ・リンク無効）<span class="arrow">${IC.ext}</span></a>
+      ${SHADE_PHOTO_FOLDERS[o.clinic]
+        ? `<a class="linkline" href="${esc(SHADE_PHOTO_FOLDERS[o.clinic])}" target="_blank" rel="noopener">📷 シェード写真フォルダ（Drive）<span class="arrow">${IC.ext}</span></a>`
+        : `<div class="linkline" style="color:var(--muted)">📷 シェード写真フォルダ — 本番接続時に医院ごとのDriveフォルダを設定します</div>`}
+    </div>
+
+    <div class="section-label">ステータス履歴</div>
+    <div class="card">${histRows || '<div style="font-size:13px;color:var(--muted)">まだ履歴はありません</div>'}</div>
+  </main>`;
+}
+
+// ---------- 描画: 技工指示書 / 保証書（印刷でそのままPDF保存できる帳票） ----------
+function docTop(title) {
+  return `<div class="top no-print">
+    <div class="back-row">
+      <button class="icon-btn" data-act="go-detail" aria-label="戻る">${IC.back}</button>
+      <div class="title">${esc(title)}</div>
+    </div>
+  </div>`;
+}
+// 紙の指示書と同じ十字の歯式表記（選択歯を反転表示）
+function docTeethChart(teeth) {
+  const set = new Set(teeth);
+  const cell = (q, n) => `<span class="dtc ${set.has(q + n) ? "on" : ""}">${n}</span>`;
+  const row = (q1, q2) =>
+    `<div class="dtc-row">${[8,7,6,5,4,3,2,1].map(n => cell(q1, n)).join("")}<span class="dtc-mid"></span>${[1,2,3,4,5,6,7,8].map(n => cell(q2, n)).join("")}</div>`;
+  return `<div class="dtc-wrap">${row("右上", "左上")}${row("右下", "左下")}</div>`;
+}
+function viewSheet() {
+  const o = findOrder(state.orderNo);
+  if (!o) { state.view = "home"; return viewHome(); }
+  const rows = o.items.map(it => {
+    const p = PRO[it.prosId];
+    const price = itemPrice(o, it);
+    return `<tr>
+      <td>${esc(p ? p.name : "?")}${it.photoInDrive ? "<br><small>シェード写真Driveあり</small>" : ""}</td>
+      <td>${esc(it.shade || "—")}</td>
+      <td class="num" style="text-align:right">${it.qty}</td>
+      <td class="num" style="text-align:right">${price != null ? "¥" + price.toLocaleString() : "—"}</td>
+    </tr>
+    <tr><td colspan="4" style="padding:8px 6px">${it.teeth.length ? docTeethChart(it.teeth) : '<span style="color:#888;font-size:11px">部位指定なし</span>'}</td></tr>`;
+  }).join("");
+  const total = o.items.reduce((a, it) => a + (itemPrice(o, it) || 0), 0);
+  return `${docTop("技工指示書")}
+  <main>
+    <div class="doc">
+      <h1 style="letter-spacing:.2em">歯科技工指示書</h1>
+      <div style="text-align:center;font-size:11.5px;margin-bottom:8px">〈 栗林歯科医院 ⇄ BFL 〉</div>
+      <div class="doc-meta"><span>発注番号: <span class="num">${esc(o.no)}</span></span><span>発行日: ${fmtJPFull(`${o.no.slice(0,4)}-${o.no.slice(4,6)}-${o.no.slice(6,8)}`)}</span></div>
+      <table>
+        <tr><th>医院名</th><td>${esc(CLINIC_FULL[o.clinic] || o.clinic)}</td><th>担当Dr</th><td>${esc(o.doctor)}</td></tr>
+        <tr><th>カルテNo</th><td class="num">${esc(o.karte)}</td><th>患者名（カナ）</th><td>${esc(o.patient)}</td></tr>
+        <tr><th>印象日</th><td class="num">${fmtJP(o.impressionDate)}</td><th>医院発送日</th><td class="num">${fmtJP(o.shipDate)}</td></tr>
+        <tr><th>納品日</th><td class="num"><b>${fmtJP(orderDelivery(o))}</b>（納期表準拠）</td><th>患者予約日</th><td class="num">${fmtJP(o.apptDate)}</td></tr>
+      </table>
+      <table class="items-tbl">
+        <tr><th>補綴物（使用材料）・部位</th><th style="width:4.2em">シェード</th><th style="width:2.6em;text-align:right">本数</th><th style="width:6em;text-align:right">金額</th></tr>
+        ${rows}
+        <tr><td colspan="3" style="text-align:right;font-weight:600">合計</td><td class="num" style="text-align:right;font-weight:700">¥${total.toLocaleString()}</td></tr>
+      </table>
+      <div style="font-size:11px;color:#555;margin-bottom:2px">《 設計・指示事項 》</div>
+      <div class="note-box">${esc(o.note || "")}</div>
+      <div class="fine">
+        ■ 再治療の場合、○をつけてください。　① 再imp（一度も作製していないケース）　② 再製（補綴物を作製したケース）　③ 再治療（補綴除去して、再度補綴物を作り直すケース）<br>
+        ■ 再治療理由：不適合 ・ 割れた ・ かけた ・ 印象問題 ・ 歯の移動 ・ 模型問題 ・ その他<br>
+        ※院内保証・ガイドデント・BFL保証 → ③になります。
+      </div>
+      <div class="coel"><b>Beyond The Future Dental Lab</b>（合同会社COEL）<br>
+        TEL：000-0000-0000 ／ 〒000-0000 ○○県○○市○○ 0-0-0（デモ用ダミー）</div>
+    </div>
+    <div class="doc-actions">
+      <button class="btn primary" data-act="print-doc">🖨 印刷 / PDF保存</button>
+    </div>
+    <p class="no-print" style="font-size:11px;color:var(--muted)">本番接続後は、発注と同時にこのPDFが患者フォルダ（Drive）へ自動保存され、BFL側でも同じものが見られます。</p>
+  </main>`;
+}
+// Driveの「BFL保証書（審美歯科治療5年保証書）」の文面・構成に準拠
+const WARRANTY_TERMS_PDF = "#demo-no-link";
+function viewWarranty() {
+  const o = findOrder(state.orderNo);
+  if (!o) { state.view = "home"; return viewHome(); }
+  const sigItems = o.items.filter(it => PRO[it.prosId]?.sig);
+  const proNames = sigItems.map(it => `${PRO[it.prosId].name}（${it.qty}本）`).join("、") || "—";
+  const teethAll = sortTeeth(sigItems.flatMap(it => it.teeth));
+  return `${docTop("保証書")}
+  <main>
+    <div class="doc warranty">
+      <h1 style="letter-spacing:.15em">審美歯科治療5年保証書</h1>
+      <div class="doc-meta"><span>発注番号: <span class="num">${esc(o.no)}</span></span><span>${esc(CLINIC_FULL[o.clinic] || o.clinic)}</span></div>
+      <p style="font-size:12.5px;margin-bottom:10px">私は、審美歯科治療5年保証規約に基づき、審美歯科治療保証に同意します。</p>
+
+      <div class="sec-t">ー 個人情報の取り扱いに関する同意書 ー</div>
+      <div class="fine">
+        申請者は、以下の個人情報の取り扱いに関する内容に同意します。<br>
+        ◉個人情報の利用目的について　医療法人社団 栗林歯科医院（以下「KDC」といいます。）および合同会社COEL（以下「BFL」といいます。）が申請者からお預かりした情報は、審美歯科治療5年保証（以下「保証」といいます。）のご登録、再治療事由に該当した場合の円滑かつ適切な再治療、保証に関するサービスのご提供、医療向上への寄与（臨床データ収集、研究等への寄与）のほか、症状管理および診療維持にかかわる業務のご案内、保証制度の健全な運営、などに利用させていただきます。<br>
+        ◉KDC、またBFLが申請者からお預かりした情報は、次の場合に提供、または共有利用することがあります。⑴法令等による外部への提供が必要と判断される場合 ⑵利用目的の範囲内において、あらかじめ守秘義務契約を締結した業務委託先等に提供する場合 ⑶医師等（KDC以外の医師）の第三者に対し、保証請求内容に関する事実確認を行う場合 ⑷保証の適正および迅速な適用のために必要な範囲において保証関係者に提供する場合 ⑸再保証契約の締結や再保証金の請求のため、本保証や再治療に関する情報を再保証会社等に提供する場合 ⑹申請者の紹介依頼に従い、他の歯科医院をご紹介する場合<br>
+        ◉共同して利用される個人情報の項目：審美歯科治療５年保証治療情報　◉共同して利用する者の範囲：合同会社COELと業務提携契約、共同研究をするための契約、その他何らかの契約を結んだ者　◉共同して利用する個人情報の管理について責任を有する者の氏名又は名称：合同会社COEL 事務<br>
+        ◉個人情報のご提供に関しては任意ではありますが、ご提供いただけない場合は保証登録が完了できないこと、ご了承ください。
+      </div>
+
+      <table>
+        <tr><th>カルテNo</th><td class="num">${esc(o.karte)}</td><th>患者名</th><td>${esc(o.patient)}</td></tr>
+        <tr><th>補綴物種類</th><td colspan="3">${esc(proNames)}</td></tr>
+        <tr><th>部位</th><td colspan="3">${teethAll.length ? docTeethChart(teethAll) : "—"}</td></tr>
+        <tr><th>担当医</th><td>${esc(o.doctor)}</td><th>保証開始日<br><small>（人工歯 装着日）</small></th><td class="num">${o.warrantyStart ? fmtJPFull(o.warrantyStart) : "セット完了時に確定"}</td></tr>
+        <tr><th>保証終了日</th><td class="num">${o.warrantyEnd ? `<b>${fmtJPFull(o.warrantyEnd)}</b>` : "—"}</td><th>備考欄</th><td></td></tr>
+      </table>
+
+      <div style="font-size:11px;color:#555;margin-bottom:2px">申請者 ご署名</div>
+      <div class="sig-area">
+        <div class="sig-box">${o.signature ? `<img src="${o.signature}" alt="申請者署名">` : "未署名"}</div>
+      </div>
+
+      <div class="sec-t">ー 保証が適用されない事例 ー</div>
+      <div class="fine">※審美歯科治療5年保証規約 第４条より抜粋（詳細は裏面の保証規約をお読みください。）<br>
+        <li>◉補綴物の色・形が意に沿わない</li>
+        <li>◉被保証者の故意または重大な過失によるとき</li>
+        <li>◉医療法人社団 栗林歯科医院以外で行われた審美歯科治療</li>
+        <li>◉保証開始後の歯周疾患および歯科金属アレルギーの発症</li>
+        <li>◉地震、噴火、津波、洪水、高潮、暴風、台風などの天災</li>
+        <li>◉戦争、暴動、テロ、その他の事変によるとき</li>
+      </div>
+
+      <div class="sec-t">ー 保証について ー</div>
+      <div class="fine">
+        <li>◉医療法人社団 栗林歯科医院（浦安・丸の内・国東）にて審美歯科治療を行い、通常の使用状態において補綴物が破損等した場合、医療法人社団 栗林歯科医院（浦安・丸の内・国東）にて無償にて再治療を受けられます（他院での再治療については保証外）。</li>
+        <li>◉保証期間は、人工歯装着日翌日から5年間とします。</li>
+        <li>◉再治療の際、無償対象となる補綴物は、［装着時同等の補綴物］といたします。</li>
+        <li>◉補綴物の色・形が意に沿わない場合、また他院で治療を行った補綴物に関しては保証適応外です。</li>
+      </div>
+
+      <div class="coel"><b>Beyond The Future Dental Lab</b><br>
+        合同会社COEL　〒000-0000 ○○県○○市○○ 0-0-0（デモ用ダミー）<br>
+        お問合せ：000-0000-0000（平日 10:00ー17:00）※デモ用ダミー番号です。</div>
+    </div>
+    <div class="doc-actions">
+      <button class="btn ghost" data-act="open-sig">✍️ ${o.signature ? "署名をやり直す" : "署名する"}</button>
+      <button class="btn primary" data-act="print-doc">🖨 印刷 / PDF保存</button>
+    </div>
+    <a class="linkline no-print" href="${WARRANTY_TERMS_PDF}" target="_blank" rel="noopener" style="padding-left:2px">📄 保証規約（裏面）PDF（デモ・リンク無効）<span class="arrow">${IC.ext}</span></a>
+    <p class="no-print" style="font-size:11px;color:var(--muted);margin-top:8px">本番接続後は、署名済み保証書PDF（表・裏）が患者フォルダ（Drive）へ自動保存されます。印刷してのお渡し・データでのお渡しどちらも可能です。</p>
+  </main>`;
+}
+// ---------- セット時フィードバック（既存DBの BFL評価 / BFL評価コメント 列に相当） ----------
+const FB_ITEMS = [["contact", "コンタクト"], ["margin", "マージン"], ["occlusion", "咬合"]];
+let fbDraft = null;
+function openFeedback(o) {
+  fbDraft = o.feedback
+    ? { ...o.feedback }
+    : { contact: null, margin: null, occlusion: null, comment: "", photoInDrive: false };
+  state.modal = feedbackModalHTML();
+}
+function feedbackModalHTML() {
+  const f = fbDraft;
+  return `<div class="modal-bg"><div class="modal">
+    <h3>🦷 セット時フィードバック</h3>
+    <p>補綴物の適合をBFLへフィードバックします（4段階評価）</p>
+    ${FB_ITEMS.map(([k, label]) => `<div class="rate-row">
+      <span class="rl">${label}</span>
+      <div class="opts">${[1,2,3,4].map(v =>
+        `<button type="button" class="${f[k] === v ? "on" : ""}" data-fb-rate="${k}" data-val="${v}">${v}</button>`).join("")}</div>
+    </div>`).join("")}
+    <div class="rate-legend">1: 不良 ／ 2: やや不良 ／ 3: 良い ／ 4: とても良い</div>
+    <div class="field"><label>個別コメント</label>
+      <textarea id="f-fb-comment" placeholder="調整箇所・気づいた点など">${esc(f.comment)}</textarea></div>
+    <label class="check"><input type="checkbox" data-fb-photo ${f.photoInDrive ? "checked" : ""}>セット時写真はDriveにあり</label>
+    <div class="btns" style="margin-top:12px">
+      <button class="btn ghost" data-act="fb-later">あとで</button>
+      <button class="btn primary" data-act="fb-save">保存</button>
+    </div>
+  </div></div>`;
+}
+// セット完了後の後続フロー: 保証対象で未署名なら署名パッドへ
+function maybeOpenSig(o) {
+  state.modal = (o.status === 6 && o.items.some(it => PRO[it.prosId]?.sig) && !o.signature)
+    ? sigModalHTML() : null;
+}
+function fbDots(v) {
+  return v ? "●".repeat(v) + "○".repeat(4 - v) + ` ${v}` : "—";
+}
+
+// 署名パッド（canvas）。保存した署名は既存DBの「患者署名」列に相当
+function sigModalHTML() {
+  return `<div class="modal-bg"><div class="modal">
+    <h3>✍️ 患者署名</h3>
+    <p>保証書用に患者さんの署名をお願いします（指・タッチペンで記入）</p>
+    <canvas id="sig-pad"></canvas>
+    <div class="btns" style="margin-top:12px">
+      <button class="btn ghost" data-act="sig-clear">書き直す</button>
+      <button class="btn ghost" data-act="sig-later">あとで</button>
+      <button class="btn primary" data-act="sig-save">保存</button>
+    </div>
+  </div></div>`;
+}
+let sigCtx = null;
+function initSigPad() {
+  const c = $("#sig-pad");
+  if (!c || c.dataset.ready) return;
+  c.dataset.ready = "1";
+  const dpr = window.devicePixelRatio || 1;
+  const w = c.clientWidth, h = c.clientHeight;
+  c.width = w * dpr; c.height = h * dpr;
+  sigCtx = c.getContext("2d");
+  sigCtx.scale(dpr, dpr);
+  sigCtx.fillStyle = "#fff"; sigCtx.fillRect(0, 0, w, h);
+  sigCtx.strokeStyle = "#1A237E"; sigCtx.lineWidth = 2.4; sigCtx.lineCap = "round"; sigCtx.lineJoin = "round";
+  let last = null;
+  c.addEventListener("pointerdown", e => { c.setPointerCapture(e.pointerId); last = [e.offsetX, e.offsetY]; });
+  c.addEventListener("pointermove", e => {
+    if (!last) return;
+    sigCtx.beginPath(); sigCtx.moveTo(last[0], last[1]); sigCtx.lineTo(e.offsetX, e.offsetY); sigCtx.stroke();
+    last = [e.offsetX, e.offsetY];
+  });
+  const end = () => { last = null; };
+  c.addEventListener("pointerup", end); c.addEventListener("pointercancel", end);
+}
+
+// ---------- 描画: 歯式チャート ----------
+// 紙の指示書と同じ十字レイアウト。タップしやすいよう各象限を臼歯列/前歯列の2段に分ける
+const ROWS_UPPER = [
+  ["右上8","右上7","右上6","右上5","左上5","左上6","左上7","左上8"],
+  ["右上4","右上3","右上2","右上1","左上1","左上2","左上3","左上4"],
+];
+const ROWS_LOWER = [
+  ["右下4","右下3","右下2","右下1","左下1","左下2","左下3","左下4"],
+  ["右下8","右下7","右下6","右下5","左下5","左下6","左下7","左下8"],
+];
+function odontogram(idx, teeth) {
+  const set = new Set(teeth);
+  const cell = t => `<button type="button" class="tooth ${set.has(t) ? "sel" : ""}" data-tooth="${esc(t)}" data-item="${idx}" aria-pressed="${set.has(t)}" aria-label="${esc(t)}">${t.slice(2)}</button>`;
+  const grid = row => `<div class="odn-grid">${row.map(cell).join("")}</div>`;
+  const readout = sortTeeth(teeth).map(t =>
+    `<span class="rt">${esc(t)}<button type="button" data-rm-tooth="${esc(t)}" data-item="${idx}" aria-label="${esc(t)}を外す">×</button></span>`).join("");
+  return `<div class="odn" data-odn="${idx}">
+    <div class="odn-lbl"><span>右上</span><span>左上</span></div>
+    <div class="odn-arch">${grid(ROWS_UPPER[0])}${grid(ROWS_UPPER[1])}</div>
+    <div class="odn-arch">${grid(ROWS_LOWER[0])}${grid(ROWS_LOWER[1])}</div>
+    <div class="odn-lbl bottom"><span>右下</span><span>左下</span></div>
+    <div class="odn-readout">${readout || '<span style="font-size:12px;color:var(--muted)">タップまたは横になぞって選択</span>'}
+      ${teeth.length ? `<button type="button" class="odn-clear" data-clear-teeth="${idx}">クリア</button>` : ""}</div>
+    <div class="odn-hint">ブリッジなど連続歯は横になぞると一気に選べます（上下スクロールはそのまま使えます）</div>
+  </div>`;
+}
+
+// ---------- 描画: 新規発注 ----------
+function newDraft() {
+  return {
+    clinic: state.clinic, doctor: "", karte: "", patient: "",
+    impressionDate: todayISO(), shipDate: todayISO(), apptDate: "", note: "",
+    items: [{ prosId: null, cat: null, teeth: [], shade: "", qty: 1, photoInDrive: false }],
+  };
+}
+function viewNew() {
+  if (!draft) draft = newDraft();
+  const d = draft;
+  const docGroups = staffGroups(d.clinic);
+
+  const itemCards = d.items.map((it, i) => {
+    const p = it.prosId ? PRO[it.prosId] : null;
+    const cats = `<div class="cat-chips">${CATEGORIES.map(c =>
+      `<button type="button" class="${it.cat === c ? "on" : ""}" data-cat="${esc(c)}" data-item="${i}">${esc(c)}</button>`).join("")}</div>`;
+    const prods = it.cat ? `<div class="field" style="margin-top:10px"><label>補綴物</label>
+      <select data-pros="${i}">
+        <option value="">選択してください</option>
+        ${PROSTHETICS.filter(x => x.cat === it.cat).map(x =>
+          `<option value="${x.id}" ${it.prosId === x.id ? "selected" : ""}>${esc(x.name)}${x.naka != null ? `（中${x.naka}日）` : x.cal ? `（暦日${x.cal}日）` : ""}</option>`).join("")}
+      </select></div>` : "";
+    const needTeeth = p && (!p.noTeeth || it.forceTeeth);
+    const dd = p ? deliveryISO(d.shipDate || d.impressionDate, p, d.impressionDate) : null;
+    const unit = p ? ((d.clinic === "国東" && p.kunisaki != null) ? p.kunisaki : p.price) : null;
+    return `<div class="item-card">
+      <div class="ic-head"><span class="t">技工物 ${i + 1}</span>
+        ${d.items.length > 1 ? `<button type="button" class="rm" data-rm-item="${i}">削除</button>` : ""}</div>
+      <div class="field"><label>補綴カテゴリ</label>${cats}</div>
+      ${prods}
+      ${p ? `
+        ${needTeeth || it.teeth.length ? `<div class="field"><label>部位（歯式）</label>${odontogram(i, it.teeth)}</div>`
+          : `<button type="button" style="font-size:12.5px;color:var(--accent);font-weight:700;margin-bottom:10px" data-show-teeth="${i}">＋ 部位を指定する</button>`}
+        <div class="field"><label>シェード</label>
+          <div class="shade-chips">${SHADES.map(sh =>
+            `<button type="button" class="${it.shade === sh ? "on" : ""}" data-shade="${esc(sh)}" data-item="${i}">${esc(sh)}</button>`).join("")}</div>
+        </div>
+        <label class="check"><input type="checkbox" data-photo="${i}" ${it.photoInDrive ? "checked" : ""}>シェード写真はDriveにあり（一眼撮影）</label>
+        <div class="row2" style="margin-top:8px">
+          <div class="field" style="margin-bottom:0"><label>本数</label><input type="number" min="1" inputmode="numeric" value="${it.qty}" data-qty="${i}"></div>
+          <div class="field" style="margin-bottom:0"><label>金額</label>
+            <div style="padding:10px 2px;font-weight:700" class="num" data-amount="${i}">${unit != null ? "¥" + (unit * (it.qty || 1)).toLocaleString() : "—"}</div></div>
+        </div>
+        <div class="due-preview">納期 <b class="num">${fmtJP(dd)}</b>
+          <span class="src">${esc(nakaSrcLabel(p, d.clinic))}</span></div>
+        ${p.note ? `<div style="font-size:11.5px;color:var(--muted);margin-top:6px">※ ${esc(p.note)}</div>` : ""}
+      ` : ""}
+    </div>`;
+  }).join("");
+
+  return `
+  <div class="top">
+    <div class="back-row">
+      <button class="icon-btn" data-act="go-home" aria-label="戻る">${IC.back}</button>
+      <div class="title">新規発注（技工指示書）</div>
+    </div>
+  </div>
+  <main>
+    <div class="card">
+      <div class="field"><label>医院</label>
+        <div class="seg" style="padding:0">${CLINICS.map(c => `<button type="button" class="${d.clinic === c ? "on" : ""}" data-draft-clinic="${c}">${c}</button>`).join("")}</div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>カルテ番号</label><input type="text" id="f-karte" placeholder="M01234" value="${esc(d.karte)}" autocapitalize="characters"></div>
+        <div class="field"><label>患者名（カナ）</label><input type="text" id="f-patient" placeholder="ヤマダ ハナコ" value="${esc(d.patient)}"></div>
+      </div>
+      <div class="field"><label>担当医</label>
+        <select id="f-doctor"><option value="">選択してください</option>
+          ${docGroups.map(g => `<optgroup label="${esc(g.label)}">
+            ${g.names.map(n => `<option ${d.doctor === n ? "selected" : ""}>${esc(n)}</option>`).join("")}
+          </optgroup>`).join("")}
+        </select>
+      </div>
+      <div class="row2">
+        <div class="field"><label>印象日</label><input type="date" id="f-imp" value="${esc(d.impressionDate)}"></div>
+        <div class="field"><label>医院発送日</label><input type="date" id="f-ship" value="${esc(d.shipDate)}"></div>
+      </div>
+      <div class="field" style="margin-bottom:0"><label>患者予約日（セット予定）</label><input type="date" id="f-appt" value="${esc(d.apptDate)}"></div>
+    </div>
+
+    <div class="section-label">技工物 — 複数まとめて登録できます</div>
+    ${itemCards}
+    <button type="button" class="add-item" data-act="add-item">＋ 別の種類の技工物を追加</button>
+
+    <div class="card">
+      <div class="field" style="margin-bottom:0"><label>Drコメント・備考</label><textarea id="f-note" placeholder="BFLへの申し送り">${esc(d.note)}</textarea></div>
+    </div>
+    ${apptWarning(d)}
+    <div class="sticky-save"><button class="btn primary" style="width:100%;padding:15px 0" data-act="save-order">この内容で発注を登録</button></div>
+  </main>`;
+}
+function apptWarning(d) {
+  if (!d.apptDate) return "";
+  let latest = null;
+  for (const it of d.items) {
+    if (!it.prosId) continue;
+    const x = deliveryISO(d.shipDate || d.impressionDate, PRO[it.prosId], d.impressionDate);
+    if (x && (!latest || x > latest)) latest = x;
+  }
+  if (latest && latest > d.apptDate) {
+    return `<div class="alert warn"><span>⚠️</span><div>納期（${fmtJP(latest)}）が患者予約日（${fmtJP(d.apptDate)}）より後になります。予約日を見直すか、BFLに納期相談を。</div></div>`;
+  }
+  return "";
+}
+
+// ---------- 描画: 納期表 ----------
+function viewNoki() {
+  const ship = state.nokiShip;
+  const pdfs = NOKI_PDFS[state.clinic] || [];
+  const rows = CATEGORIES.map(cat => {
+    const items = PROSTHETICS.filter(p => p.cat === cat && (p.naka != null || p.cal));
+    if (!items.length) return "";
+    return `<tr class="cat-row"><td colspan="2">${esc(cat)}</td></tr>` + items.map(p => {
+      const d = deliveryISO(ship, p, ship);
+      return `<tr><td>${esc(p.name)}<span class="naka">${p.cal ? `暦日${p.cal}日` : `中${p.naka}日${p.est ? "・目安" : ""}`}</span></td>
+        <td class="num"><b>${fmtJP(d)}</b></td></tr>`;
+    }).join("");
+  }).join("");
+
+  return `
+  <div class="top">
+    <div class="top-row"><div class="brand">納期表<small>Delivery Schedule</small></div></div>
+    <div class="seg">${CLINICS.map(c => `<button class="${state.clinic === c ? "on" : ""}" data-clinic="${c}">${c}</button>`).join("")}</div>
+  </div>
+  <main>
+    <div class="section-label">公式PDF（BFL発行・${esc(state.clinic)}）</div>
+    <div class="card" style="padding-top:2px;padding-bottom:2px">
+      ${pdfs.map(p => `<a class="linkline" href="${esc(p.url)}" target="_blank" rel="noopener">📄 ${esc(p.label)} 納期表（デモ・リンク無効）<span class="arrow">${IC.ext}</span></a>`).join("")}
+    </div>
+
+    <div class="section-label">納期の逆引き — この日に発送したら？</div>
+    <div class="card">
+      <div class="field"><label>医院発送日</label><input type="date" id="noki-ship" value="${esc(ship)}"></div>
+      <div style="overflow-x:auto"><table class="noki-table"><thead><tr><th>技工物</th><th>納品日</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p style="font-size:11px;color:var(--muted);margin-top:10px">中X日は${esc(NAKA_SOURCE[state.clinic] || "納期表")}の値。休業日（土日・盆・年末年始等）を除いた営業日で計算しています。納期表は医院×月ごとに発行されるため、本番では各院・各月の値を取り込みます。正式な納期は公式PDFをご確認ください。</p>
+    </div>
+  </main>`;
+}
+
+// ---------- 描画: 全体 ----------
+function nav() {
+  const t = (v) => state.view === v ? "on" : "";
+  return `<nav class="nav">
+    <button class="${t("home")}" data-nav="home">${IC.list}一覧</button>
+    <button class="${t("new")}" data-nav="new">${IC.plus}新規発注</button>
+    <button class="${t("noki")}" data-nav="noki">${IC.cal}納期表</button>
+  </nav>`;
+}
+function render() {
+  const app = $("#app");
+  let html = "";
+  if (state.view === "home") html = viewHome();
+  else if (state.view === "detail") html = viewDetail();
+  else if (state.view === "new") html = viewNew();
+  else if (state.view === "noki") html = viewNoki();
+  else if (state.view === "sheet") html = viewSheet();
+  else if (state.view === "warranty") html = viewWarranty();
+  html += nav();
+  if (state.toast) {
+    html += `<div class="toast" role="status"><span>${esc(state.toast.msg)}</span>
+      ${state.toast.undoFn ? '<button data-act="toast-undo">元に戻す</button>' : ""}</div>`;
+  }
+  if (state.modal) html += state.modal;
+  app.innerHTML = html;
+  initSigPad();
+  const si = $("#search-in");
+  if (si && state.searchOpen && document.activeElement !== si) { si.focus(); si.setSelectionRange(si.value.length, si.value.length); }
+}
+
+// ---------- イベント ----------
+document.addEventListener("click", (e) => {
+  const el = e.target.closest("[data-nav],[data-clinic],[data-filter],[data-open],[data-act],[data-status-to],[data-draft-clinic],[data-cat],[data-shade],[data-rm-item],[data-rm-tooth],[data-clear-teeth],[data-show-teeth],[data-modal],[data-tooth],[data-doc],[data-fb-rate]");
+  if (!el) return;
+
+  if (el.dataset.doc) { state.view = el.dataset.doc; render(); return; }
+
+  if (el.dataset.fbRate) {
+    if (fbDraft) {
+      const cur = document.getElementById("f-fb-comment");
+      if (cur) fbDraft.comment = cur.value; // 再描画前にコメントを退避
+      fbDraft[el.dataset.fbRate] = Number(el.dataset.val);
+      state.modal = feedbackModalHTML();
+      render();
+    }
+    return;
+  }
+
+  if (el.dataset.tooth) {
+    // キーボード操作（Enter/Space → e.detail===0）のみここで処理。ポインタはpointerdown側で処理済み
+    if (e.detail === 0 && draft) {
+      const it = draft.items[Number(el.dataset.item)];
+      if (it) {
+        const t = el.dataset.tooth;
+        it.teeth = it.teeth.includes(t) ? it.teeth.filter(x => x !== t) : [...it.teeth, t];
+        syncQty(it); render();
+      }
+    }
+    return;
+  }
+
+  if (el.dataset.nav) {
+    state.view = el.dataset.nav;
+    if (state.view === "new" && !draft) draft = newDraft();
+    render(); return;
+  }
+  if (el.dataset.clinic) { state.clinic = el.dataset.clinic; state.filter = "all"; render(); return; }
+  if (el.dataset.filter != null) { state.filter = el.dataset.filter === "all" ? "all" : Number(el.dataset.filter); render(); return; }
+  if (el.dataset.open) { state.view = "detail"; state.orderNo = el.dataset.open; render(); return; }
+
+  if (el.dataset.statusTo != null) {
+    const o = findOrder(state.orderNo); if (!o) return;
+    const to = Number(el.dataset.statusTo);
+    applyStatus(o, to);
+    // セット完了時はフィードバック入力 →（保証対象なら）署名パッドの順に開く
+    if (to === 6) openFeedback(o);
+    showToast(`${ST[to].name} に更新しました`, () => { undoLast(o, "元に戻す"); render(); });
+    return;
+  }
+  if (el.dataset.draftClinic) { draft.clinic = el.dataset.draftClinic; draft.doctor = ""; render(); return; }
+  if (el.dataset.cat) {
+    const it = draft.items[Number(el.dataset.item)];
+    if (it.cat !== el.dataset.cat) { it.cat = el.dataset.cat; it.prosId = null; }
+    render(); return;
+  }
+  if (el.dataset.shade) {
+    const it = draft.items[Number(el.dataset.item)];
+    it.shade = it.shade === el.dataset.shade ? "" : el.dataset.shade;
+    render(); return;
+  }
+  if (el.dataset.rmItem != null) { draft.items.splice(Number(el.dataset.rmItem), 1); render(); return; }
+  if (el.dataset.rmTooth) {
+    const it = draft.items[Number(el.dataset.item)];
+    it.teeth = it.teeth.filter(t => t !== el.dataset.rmTooth);
+    syncQty(it); render(); return;
+  }
+  if (el.dataset.clearTeeth != null) {
+    const it = draft.items[Number(el.dataset.clearTeeth)];
+    it.teeth = []; syncQty(it); render(); return;
+  }
+  if (el.dataset.showTeeth != null) {
+    draft.items[Number(el.dataset.showTeeth)].forceTeeth = true;
+    render(); return;
+  }
+
+  switch (el.dataset.act) {
+    case "toggle-search": state.searchOpen = !state.searchOpen; if (!state.searchOpen) state.search = ""; render(); break;
+    case "go-home": state.view = "home"; render(); break;
+    case "go-detail": state.view = "detail"; render(); break;
+    case "print-doc": window.print(); break;
+    case "open-sig": state.modal = sigModalHTML(); render(); break;
+    case "sig-clear": {
+      const c = $("#sig-pad");
+      if (c && sigCtx) { sigCtx.fillStyle = "#fff"; sigCtx.fillRect(0, 0, c.clientWidth, c.clientHeight); }
+      break;
+    }
+    case "sig-later": state.modal = null; render(); break;
+    case "fb-open": {
+      const o = findOrder(state.orderNo); if (!o) return;
+      openFeedback(o); render(); break;
+    }
+    case "fb-later": {
+      const o = findOrder(state.orderNo);
+      if (o) maybeOpenSig(o); else state.modal = null;
+      render(); break;
+    }
+    case "fb-save": {
+      const o = findOrder(state.orderNo); if (!o) return;
+      o.feedback = { ...fbDraft, at: o.feedback?.at || todayISO() };
+      save();
+      maybeOpenSig(o);
+      render();
+      showToast("フィードバックを保存しました");
+      break;
+    }
+    case "sig-save": {
+      const c = $("#sig-pad");
+      const o = findOrder(state.orderNo);
+      if (c && o) { o.signature = c.toDataURL("image/png"); o.signedAt = todayISO(); save(); }
+      state.modal = null; render();
+      showToast("署名を保存しました。保証書から印刷・PDF保存できます");
+      break;
+    }
+    case "add-item": draft.items.push({ prosId: null, cat: null, teeth: [], shade: "", qty: 1, photoInDrive: false }); render(); break;
+    case "save-order": saveOrder(); break;
+    case "status-back": {
+      const o = findOrder(state.orderNo); if (!o || !o.undoStack.length) return;
+      const cur = o.status;
+      undoLast(o);
+      showToast(`${ST[cur].short} → ${ST[o.status].short} に戻しました`);
+      break;
+    }
+    case "resend": {
+      state.modal = `<div class="modal-bg" data-modal="close"><div class="modal">
+        <h3>⚠️ 要再送にしますか？</h3><p>印象不備などでやり直しが必要な場合に使います。医院に再送依頼が表示されます。</p>
+        <div class="btns"><button class="btn ghost" data-modal="close">やめる</button>
+        <button class="btn primary" data-modal="resend-yes" style="background:var(--danger);color:#fff">要再送にする</button></div>
+      </div></div>`;
+      render(); break;
+    }
+    case "toast-undo": {
+      const fn = state.toast?.undoFn; state.toast = null; state.modal = null;
+      if (toastTimer) clearTimeout(toastTimer);
+      if (fn) fn(); else render();
+      break;
+    }
+    case "reset-demo": {
+      db = { seedVersion: SEED_VERSION, orders: seedOrders() };
+      db.orders.forEach(migrate); save();
+      showToast("デモデータをリセットしました");
+      break;
+    }
+  }
+
+  if (el.dataset.modal) {
+    if (el.dataset.modal === "resend-yes") {
+      const o = findOrder(state.orderNo);
+      state.modal = null;
+      if (o) { applyStatus(o, 99, "医院へ再送を依頼"); showToast("⚠️ 要再送 にしました", () => { undoLast(o, "元に戻す"); render(); }); }
+      else render();
+    } else if (el.dataset.modal === "close") {
+      // 背景は背景自体をタップしたときのみ閉じる（モーダル内の誤タップで閉じない）
+      if (!el.classList.contains("modal-bg") || e.target === el) { state.modal = null; render(); }
+    }
+    return;
+  }
+});
+
+// 歯式: タップ + なぞり選択（touch-action:pan-yで上下スクロールと共存）
+let painting = null; // {item, mode, snapshot}
+function toothApply(cell) {
+  if (!painting) return;
+  const idx = Number(cell.dataset.item), tooth = cell.dataset.tooth;
+  if (idx !== painting.item) return;
+  const it = draft.items[idx];
+  const has = it.teeth.includes(tooth);
+  if (painting.mode && !has) { it.teeth.push(tooth); cell.classList.add("sel"); cell.setAttribute("aria-pressed","true"); }
+  if (!painting.mode && has) { it.teeth = it.teeth.filter(t => t !== tooth); cell.classList.remove("sel"); cell.setAttribute("aria-pressed","false"); }
+}
+document.addEventListener("pointerdown", (e) => {
+  const cell = e.target.closest(".tooth");
+  if (!cell || !draft) return;
+  const idx = Number(cell.dataset.item);
+  const it = draft.items[idx];
+  if (!it) return;
+  painting = { item: idx, mode: !it.teeth.includes(cell.dataset.tooth), snapshot: [...it.teeth] };
+  toothApply(cell);
+});
+document.addEventListener("pointermove", (e) => {
+  if (!painting) return;
+  const cell = document.elementFromPoint(e.clientX, e.clientY)?.closest?.(".tooth");
+  if (cell) toothApply(cell);
+});
+document.addEventListener("pointerup", () => {
+  if (!painting) return;
+  const it = draft && draft.items[painting.item];
+  painting = null;
+  if (it) { syncQty(it); render(); }
+});
+// スクロールにジェスチャを奪われたら、このジェスチャで触った選択を元に戻す（誤選択防止）
+document.addEventListener("pointercancel", () => {
+  if (!painting) return;
+  const it = draft && draft.items[painting.item];
+  if (it) it.teeth = painting.snapshot;
+  painting = null;
+  render();
+});
+function syncQty(it) { if (it.teeth.length) it.qty = it.teeth.length; }
+
+// フォーム入力（テキストはdraftへ、再描画なし）
+document.addEventListener("input", (e) => {
+  const t = e.target;
+  if (t.id === "search-in") {
+    // 入力欄は作り直さず一覧とチップだけ更新（IME変換・カーソル位置を壊さない）
+    state.search = t.value;
+    const orders = homeFiltered();
+    const chipsEl = document.getElementById("home-chips");
+    const listEl = document.getElementById("home-list");
+    if (chipsEl) chipsEl.innerHTML = homeChipsHTML(orders);
+    if (listEl) listEl.innerHTML = homeCardsHTML(orders);
+    return;
+  }
+  if (t.id === "f-fb-comment" && fbDraft) { fbDraft.comment = t.value; return; }
+  if (!draft && t.id !== "noki-ship") return;
+  switch (t.id) {
+    case "f-karte": draft.karte = t.value; return;
+    case "f-patient": draft.patient = t.value; return;
+    case "f-note": draft.note = t.value; return;
+  }
+  if (t.dataset.qty != null) {
+    const it = draft.items[Number(t.dataset.qty)];
+    it.qty = Math.max(1, Number(t.value) || 1);
+    const p = PRO[it.prosId];
+    const unit = p ? ((draft.clinic === "国東" && p.kunisaki != null) ? p.kunisaki : p.price) : null;
+    const amt = document.querySelector(`[data-amount="${t.dataset.qty}"]`);
+    if (amt) amt.textContent = unit != null ? "¥" + (unit * it.qty).toLocaleString() : "—";
+  }
+});
+document.addEventListener("change", (e) => {
+  const t = e.target;
+  if (t.id === "noki-ship") { state.nokiShip = t.value || todayISO(); render(); return; }
+  if (t.dataset && t.dataset.fbPhoto != null && fbDraft) { fbDraft.photoInDrive = t.checked; return; }
+  if (!draft) return;
+  switch (t.id) {
+    case "f-doctor": draft.doctor = t.value; return;
+    case "f-imp": draft.impressionDate = t.value; render(); return;
+    case "f-ship": draft.shipDate = t.value; render(); return;
+    case "f-appt": draft.apptDate = t.value; render(); return;
+  }
+  if (t.dataset.pros != null) {
+    const it = draft.items[Number(t.dataset.pros)];
+    it.prosId = t.value ? Number(t.value) : null;
+    render(); return;
+  }
+  if (t.dataset.photo != null) {
+    const it = draft.items[Number(t.dataset.photo)];
+    it.photoInDrive = t.checked;
+    // 写真あり運用と矛盾しないよう、シェード未選択なら「写真あり」を自動セット
+    if (t.checked && !it.shade) { it.shade = "写真あり"; render(); }
+    return;
+  }
+});
+// ---------- 保存 ----------
+function saveOrder() {
+  const d = draft;
+  const errs = [];
+  if (!d.karte.trim()) errs.push("カルテ番号");
+  if (!d.patient.trim()) errs.push("患者名");
+  if (!d.doctor) errs.push("担当医");
+  if (!d.items.length || d.items.some(it => !it.prosId)) errs.push("補綴物の選択");
+  const missTeeth = d.items.filter(it => it.prosId && !PRO[it.prosId].noTeeth && !it.teeth.length);
+  if (errs.length) { showToast(`未入力: ${errs.join("・")}`); return; }
+  if (missTeeth.length && !confirm("部位（歯式）が未選択の技工物があります。このまま登録しますか？")) return;
+  const photoMismatch = d.items.some(it => it.prosId && it.shade === "写真あり" && !it.photoInDrive);
+  if (photoMismatch && !confirm("シェード「写真あり」の技工物に「シェード写真はDriveにあり」のチェックがありません。このまま登録しますか？")) return;
+
+  const dateKey = todayISO().replaceAll("-", "");
+  const seq = db.orders.filter(o => o.no.startsWith(dateKey)).length + 1;
+  const no = `${dateKey}-${String(seq).padStart(4, "0")}`;
+  db.orders.unshift({
+    no, clinic: d.clinic, doctor: d.doctor, karte: d.karte.trim(), patient: d.patient.trim(),
+    items: d.items.map(it => ({ prosId: it.prosId, teeth: sortTeeth(it.teeth), shade: it.shade, qty: it.qty, photoInDrive: it.photoInDrive })),
+    note: d.note.trim(), impressionDate: d.impressionDate, shipDate: d.shipDate,
+    apptDate: d.apptDate, status: 0, dates: {}, history: [], undoStack: [],
+  });
+  save();
+  draft = null;
+  state.view = "detail"; state.orderNo = no; state.clinic = d.clinic; state.filter = "all";
+  render();
+  showToast(`発注 ${no} を登録しました（${ST[0].short}）`);
+}
+
+// ---------- 起動 ----------
+render();
+</script>
+</body>
+</html>

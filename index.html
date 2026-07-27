@@ -106,6 +106,8 @@ main{flex:1;padding:14px 16px calc(84px + env(safe-area-inset-bottom))}
 .badge.late{background:color-mix(in srgb,var(--danger) 14%,var(--surface));color:var(--danger)}
 .badge.soon{background:color-mix(in srgb,var(--warn) 16%,var(--surface));color:var(--warn)}
 .badge.conflict{background:color-mix(in srgb,var(--danger) 14%,var(--surface));color:var(--danger)}
+.badge.rush{background:color-mix(in srgb,var(--warn) 18%,var(--surface));color:var(--warn)}
+.badge.nocheck{background:var(--surface2);color:var(--muted)}
 .empty{color:var(--muted);text-align:center;padding:40px 0;font-size:13.5px}
 
 /* ---------- bottom nav ---------- */
@@ -320,14 +322,22 @@ function staffGroups(clinic) {
 }
 
 const STATUSES = [
-  { id: 0,  name: "⓪ 医院から発送前",         short: "発送前",   color: "#F5F5F5", side: "医院", flow: 0 },
-  { id: 1,  name: "① スキャン送信済み",       short: "スキャン済", color: "#E3F2FD", side: "医院", flow: 1 },
-  { id: 2,  name: "② 医院から発送済み（模型）", short: "発送済(模型)", color: "#BBDEFB", side: "医院", flow: 1 },
-  { id: 3,  name: "③ BFL到着済み",            short: "BFL到着",  color: "#FFE0B2", side: "BFL", flow: 2 },
-  { id: 4,  name: "④ BFLから発送済み",        short: "BFL発送済", color: "#FFCC80", side: "BFL", flow: 3 },
-  { id: 5,  name: "⑤ 医院到着済み",           short: "医院到着",  color: "#C8E6C9", side: "医院", flow: 4 },
-  { id: 6,  name: "⑥ セット完了",             short: "SET済",    color: "#A5D6A7", side: "医院", flow: 5 },
-  { id: 99, name: "⚠️ 要再送",                short: "要再送",   color: "#FFCDD2", side: "BFL", flow: -1 },
+  { id: 0,  name: "⓪ 医院から発送前",         short: "発送前",   color: "#F5F5F5", side: "医院", flow: 0,
+    desc: "発注を登録した直後の状態。まだ医院から何も送っていません。" },
+  { id: 1,  name: "① スキャン送信済み",       short: "スキャン済", color: "#E3F2FD", side: "医院", flow: 1,
+    desc: "口腔内スキャンのデータをBFLへ送信した状態（模型は送りません）。" },
+  { id: 2,  name: "② 医院から発送済み（模型）", short: "発送済(模型)", color: "#BBDEFB", side: "医院", flow: 1,
+    desc: "印象・模型を配送でBFLへ送った状態。" },
+  { id: 3,  name: "③ BFL到着済み",            short: "BFL到着",  color: "#FFE0B2", side: "BFL", flow: 2,
+    desc: "BFLにデータ・模型が届き、製作が始まった状態。" },
+  { id: 4,  name: "④ BFLから発送済み",        short: "BFL発送済", color: "#FFCC80", side: "BFL", flow: 3,
+    desc: "技工物が完成し、BFLから医院へ発送された状態。" },
+  { id: 5,  name: "⑤ 医院到着済み",           short: "医院到着",  color: "#C8E6C9", side: "医院", flow: 4,
+    desc: "技工物が医院に届いた状態。患者さんのセットを待ちます。" },
+  { id: 6,  name: "⑥ セット完了",             short: "SET済",    color: "#A5D6A7", side: "医院", flow: 5,
+    desc: "患者さんに装着し完了した状態。自費補綴はここから5年保証が始まります。" },
+  { id: 99, name: "⚠️ 要再送",                short: "要再送",   color: "#FFCDD2", side: "BFL", flow: -1,
+    desc: "印象の不備・模型の破損などでBFLが製作を進められず、医院からの再送（再印象・再発送）が必要な状態です。医院が再スキャン／再発送すると①②に戻り、やり直しの製作が始まります。" },
 ];
 const ST = Object.fromEntries(STATUSES.map(s => [s.id, s]));
 // ステータス到達時に自動スタンプする日付フィールド
@@ -350,7 +360,8 @@ const PROSTHETICS = [
   { id: 9,  cat: "義歯・装置", name: "NG（ナイトガード ソフト）", naka: 5,  price: 5000,  sig: false, noTeeth: true },
   { id: 10, cat: "義歯・装置", name: "NGハード（ナイトガード ハード）", naka: 5, price: 5000, sig: false, noTeeth: true },
   { id: 11, cat: "義歯・装置", name: "バイオスター",              naka: 5,  price: 8000,  sig: false, noTeeth: true },
-  { id: 12, cat: "義歯・装置", name: "バイオスター（装置OFF後の早め）", naka: 5, price: 9600, sig: false, noTeeth: true },
+  { id: 12, cat: "義歯・装置", name: "バイオスター（装置OFF後の早め）", naka: 5, price: 9600, sig: false, noTeeth: true,
+    alias: "矯正装置OFF後 きょうせい バイオスター", note: "矯正装置OFF後に早めに作るケース" },
   { id: 13, cat: "義歯・装置", name: "BC（バイトプレート）",      naka: 5,  price: 8000,  sig: false, noTeeth: true },
   { id: 14, cat: "義歯・装置", name: "ホワイトニングトレー",      naka: 6,  price: 5000,  sig: false, noTeeth: true },
   { id: 15, cat: "義歯・装置", name: "咬合床",                    naka: 6,  price: 1500,  sig: false, noTeeth: true },
@@ -486,7 +497,7 @@ function toothKeyRank(t) {
 function sortTeeth(list) { return [...list].sort((a, b) => toothKeyRank(a) - toothKeyRank(b)); }
 
 // ---------- モックデータ（患者はすべて架空） ----------
-const SEED_VERSION = 4;
+const SEED_VERSION = 5;
 function seedOrders() {
   return [
     {
@@ -495,7 +506,8 @@ function seedOrders() {
         { prosId: 29, teeth: ["右上5"], shade: "A3", qty: 1, photoInDrive: true },
         { prosId: 21, teeth: ["右上6"], shade: "A3", qty: 1, photoInDrive: true },
       ],
-      note: "セメントはいつも通りで。", impressionDate: "2026-07-22", shipDate: "2026-07-22",
+      note: "セメントはいつも通りで。", drChecked: true, drCheckedBy: "Dr B", drCheckedAt: "2026-07-22",
+      impressionDate: "2026-07-22", shipDate: "2026-07-22",
       apptDate: "2026-08-07", status: 3, dates: { bflArrival: "2026-07-24" },
       history: [
         { at: "2026-07-22 18:02", from: 0, to: 1, by: "丸の内" },
@@ -515,7 +527,8 @@ function seedOrders() {
     {
       no: "20260715-0003", clinic: "丸の内", doctor: "Dr A", karte: "M01777", patient: "ヤマモト ミドリ",
       items: [{ prosId: 5, teeth: ["左上5","左上6","左上7"], shade: "", qty: 3, photoInDrive: false }],
-      note: "特急でお願いします。", impressionDate: "2026-07-15", shipDate: "2026-07-15",
+      note: "特急でお願いします。", rush: true, drChecked: true, drCheckedBy: "Dr A", drCheckedAt: "2026-07-15",
+      impressionDate: "2026-07-15", shipDate: "2026-07-15",
       apptDate: "2026-07-22", status: 4, dates: { bflArrival: "2026-07-16", bflShip: "2026-07-27" },
       history: [
         { at: "2026-07-15 16:20", from: 0, to: 1, by: "丸の内" },
@@ -598,6 +611,7 @@ const state = {
   searchOpen: false,
   orderNo: null,
   nokiShip: todayISO(),
+  nokiSearch: "",
   toast: null,
 };
 let draft = null;        // 新規発注フォームの下書き
@@ -622,10 +636,32 @@ function orderDelivery(o) {
 function itemDelivery(o, it) {
   return deliveryISO(o.shipDate || o.impressionDate || null, PRO[it.prosId], o.impressionDate);
 }
+// 特急料金: BFL納期表の「表に記載している日にち前の納期は技工料金の20%を請求」に準拠
+const RUSH_RATE = 0.2;
+function unitPrice(clinic, p) {
+  if (!p) return null;
+  return (clinic === "国東" && p.kunisaki != null) ? p.kunisaki : p.price;
+}
+function itemBase(o, it) {
+  const u = unitPrice(o.clinic, PRO[it.prosId]);
+  return u == null ? null : u * (it.qty || 1);
+}
+function itemRush(o, it) {
+  const b = itemBase(o, it);
+  return (o.rush && b != null) ? Math.round(b * RUSH_RATE) : 0;
+}
 function itemPrice(o, it) {
-  const p = PRO[it.prosId]; if (!p) return null;
-  const unit = (o.clinic === "国東" && p.kunisaki != null) ? p.kunisaki : p.price;
-  return unit == null ? null : unit * (it.qty || 1);
+  const b = itemBase(o, it);
+  return b == null ? null : b + itemRush(o, it);
+}
+function orderTotals(o) {
+  let base = 0, rush = 0, unknown = 0;
+  for (const it of o.items) {
+    const b = itemBase(o, it);
+    if (b == null) { unknown++; continue; }
+    base += b; rush += itemRush(o, it);
+  }
+  return { base, rush, total: base + rush, unknown };
 }
 function nowStamp() {
   const d = new Date();
@@ -707,8 +743,8 @@ function nextOptions(o) {
 }
 
 // ---------- トースト ----------
-function showToast(msg, undoFn) {
-  state.toast = { msg, undoFn };
+function showToast(msg, actionFn, actionLabel) {
+  state.toast = { msg, undoFn: actionFn, label: actionLabel || "元に戻す" };
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { state.toast = null; render(); }, 6000);
   render();
@@ -722,7 +758,21 @@ const IC = {
   search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
   back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
   ext: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>',
+  help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.2 2.4c-.6.2-1 .8-1 1.4v.4"/><path d="M12 17h.01"/></svg>',
 };
+
+// ステータスの意味（スタッフから「要再送とは何か」という質問があったため常時参照できるように）
+function statusHelpHTML() {
+  return `<div class="modal-bg" data-modal="close"><div class="modal" style="max-height:82vh;overflow-y:auto">
+    <h3>ステータスの意味</h3>
+    <p>案件がいまどの段階にあるかを表します。担当（医院／BFL）は、次に動く側です。</p>
+    ${STATUSES.map(s => `<div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)">
+      <span class="status-pill" style="background:${s.color};flex:0 0 auto;height:fit-content">${esc(s.name)}</span>
+      <span style="font-size:12.5px"><span style="color:var(--muted)">担当: ${esc(s.side)}</span><br>${esc(s.desc)}</span>
+    </div>`).join("")}
+    <div class="btns" style="margin-top:14px"><button class="btn primary" data-modal="close">閉じる</button></div>
+  </div></div>`;
+}
 
 // ---------- 描画: ホーム ----------
 function homeFiltered() {
@@ -768,7 +818,10 @@ function homeCardsHTML(orders) {
         const p = PRO[it.prosId];
         return `<div class="oc-item"><span>${esc(p ? p.name : "?")}</span>${it.teeth.length ? `<span class="teeth-tag">${esc(sortTeeth(it.teeth).join("・"))}</span>` : ""}${it.shade ? `<span class="teeth-tag">${esc(it.shade)}</span>` : ""}</div>`;
       }).join("")}</div>
-      <div>${statusPill(o.status)}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${statusPill(o.status)}
+        ${o.rush ? '<span class="badge rush">⚡ 特急</span>' : ""}
+        ${o.drChecked ? "" : '<span class="badge nocheck">Dr未確認</span>'}
+      </div>
       <div class="oc-foot">
         <span>納期 <span class="due num">${fmtJP(due)}</span></span>
         ${late ? '<span class="badge late">納期超過</span>' : ""}
@@ -788,6 +841,7 @@ function viewHome() {
       <div class="brand">技工物<small>BFL Lab Works — DEMO</small></div>
       <div class="top-actions">
         <button class="icon-btn" data-act="toggle-search" aria-label="検索">${IC.search}</button>
+        <button class="icon-btn" data-act="status-help" aria-label="ステータスの説明">${IC.help}</button>
       </div>
     </div>
     <div class="seg">${CLINICS.map(c => `<button class="${state.clinic === c ? "on" : ""}" data-clinic="${c}">${c}</button>`).join("")}</div>
@@ -813,7 +867,8 @@ function viewDetail() {
   const flowSteps = [ST[0], ST[o.history.some(h => h.to === 2) || o.status === 2 ? 2 : 1], ST[3], ST[4], ST[5], ST[6]];
   const curFlow = o.status === 99 ? -1 : ST[o.status].flow;
   const stepper = o.status === 99
-    ? `<div class="alert err"><span>⚠️</span><div><b>要再送</b><br>${esc(o.history.at(-1)?.note || "BFLから再送依頼が届いています")}</div></div>`
+    ? `<div class="alert err"><span>⚠️</span><div><b>要再送</b> — ${esc(ST[99].desc)}<br>
+        <b>BFLからの連絡:</b> ${esc(o.history.at(-1)?.note || "（記載なし）")}</div></div>`
     : `<div class="stepper">${flowSteps.map((st, i) =>
         `<div class="step ${i < curFlow ? "done" : i === curFlow ? "now" : ""}">
           <div class="bub">${i < curFlow ? "✓" : esc(st.name.slice(0, 1))}</div>
@@ -842,6 +897,7 @@ function viewDetail() {
         ${it.shade ? `<span class="teeth-tag">シェード ${esc(it.shade)}</span>` : ""}
         <span>${it.qty}本</span>
         ${price != null ? `<span class="num">¥${price.toLocaleString()}</span>` : ""}
+        ${itemRush(o, it) ? `<span class="naka">（本体 ¥${itemBase(o, it).toLocaleString()} + 特急 ¥${itemRush(o, it).toLocaleString()}）</span>` : ""}
       </div>
       <div class="ib-row">納期 <b class="num" style="color:var(--ink)">${fmtJP(d)}</b><span class="naka">${esc(nakaSrcLabel(p, o.clinic))}</span>
         ${it.photoInDrive ? '<span class="teeth-tag">📷 シェード写真: Driveにあり</span>' : ""}</div>
@@ -865,13 +921,23 @@ function viewDetail() {
   <main>
     ${conflict ? `<div class="alert warn"><span>⚠️</span><div>予定納期（${fmtJP(due)}）が患者予約日（${fmtJP(o.apptDate)}）より後です。予約変更または納期をBFLに相談してください。</div></div>` : ""}
     <div class="card">
-      <div style="display:flex;align-items:center;gap:8px">${statusPill(o.status)}<span style="font-size:11px;color:var(--muted)">担当: ${esc(s.side)}</span></div>
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">${statusPill(o.status)}
+        <span style="font-size:11px;color:var(--muted)">担当: ${esc(s.side)}</span>
+        ${o.rush ? '<span class="badge rush">⚡ 特急</span>' : ""}
+        ${o.drChecked ? `<span class="badge" style="background:color-mix(in srgb,var(--ok) 15%,var(--surface));color:var(--ok)">✓ Dr確認済み</span>` : '<span class="badge nocheck">Dr未確認</span>'}
+      </div>
       ${stepper}
       ${actions}
     </div>
 
     <div class="section-label">技工物（${o.items.length}件）</div>
-    <div class="card" style="padding-top:6px">${items}</div>
+    <div class="card" style="padding-top:6px">${items}
+      ${(() => { const t = orderTotals(o); return `<div class="kv" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)">
+        <dt>技工料金</dt><dd class="num">¥${t.base.toLocaleString()}</dd>
+        ${t.rush ? `<dt>特急加算（+${RUSH_RATE * 100}%）</dt><dd class="num">¥${t.rush.toLocaleString()}</dd>` : ""}
+        <dt><b>合計</b></dt><dd class="num"><b>¥${t.total.toLocaleString()}</b></dd>
+      </div>${t.unknown ? `<p style="font-size:11px;color:var(--muted);margin-top:6px">※ ${t.unknown}件は単価未設定（BFLに要確認）</p>` : ""}`; })()}
+    </div>
 
     <div class="section-label">日付</div>
     <div class="card">
@@ -911,6 +977,12 @@ function viewDetail() {
         ? `<a class="linkline" href="${esc(SHADE_PHOTO_FOLDERS[o.clinic])}" target="_blank" rel="noopener">📷 シェード写真フォルダ（Drive）<span class="arrow">${IC.ext}</span></a>`
         : `<div class="linkline" style="color:var(--muted)">📷 シェード写真フォルダ — 本番接続時に医院ごとのDriveフォルダを設定します</div>`}
     </div>
+    <div class="card" style="font-size:12px;color:var(--muted)">
+      <b style="color:var(--ink)">📁 書類の保管場所</b><br>
+      指示書・保証書のPDFは、本番接続後は Google Drive の
+      <b style="color:var(--ink)">患者フォルダ「${esc(o.karte)}_${esc(o.patient)}」</b>に自動保存されます。
+      保証の問い合わせ・シェード・納期・Drコメントを後から確認したいときは、この画面か患者フォルダを見れば揃います。
+    </div>
 
     <div class="section-label">ステータス履歴</div>
     <div class="card">${histRows || '<div style="font-size:13px;color:var(--muted)">まだ履歴はありません</div>'}</div>
@@ -939,16 +1011,16 @@ function viewSheet() {
   if (!o) { state.view = "home"; return viewHome(); }
   const rows = o.items.map(it => {
     const p = PRO[it.prosId];
-    const price = itemPrice(o, it);
+    const base = itemBase(o, it);
     return `<tr>
       <td>${esc(p ? p.name : "?")}${it.photoInDrive ? "<br><small>シェード写真Driveあり</small>" : ""}</td>
       <td>${esc(it.shade || "—")}</td>
       <td class="num" style="text-align:right">${it.qty}</td>
-      <td class="num" style="text-align:right">${price != null ? "¥" + price.toLocaleString() : "—"}</td>
+      <td class="num" style="text-align:right">${base != null ? "¥" + base.toLocaleString() : "—"}</td>
     </tr>
     <tr><td colspan="4" style="padding:8px 6px">${it.teeth.length ? docTeethChart(it.teeth) : '<span style="color:#888;font-size:11px">部位指定なし</span>'}</td></tr>`;
   }).join("");
-  const total = o.items.reduce((a, it) => a + (itemPrice(o, it) || 0), 0);
+  const t = orderTotals(o);
   return `${docTop("技工指示書")}
   <main>
     <div class="doc">
@@ -960,14 +1032,23 @@ function viewSheet() {
         <tr><th>カルテNo</th><td class="num">${esc(o.karte)}</td><th>患者名（カナ）</th><td>${esc(o.patient)}</td></tr>
         <tr><th>印象日</th><td class="num">${fmtJP(o.impressionDate)}</td><th>医院発送日</th><td class="num">${fmtJP(o.shipDate)}</td></tr>
         <tr><th>納品日</th><td class="num"><b>${fmtJP(orderDelivery(o))}</b>（納期表準拠）</td><th>患者予約日</th><td class="num">${fmtJP(o.apptDate)}</td></tr>
+        <tr><th>特急</th><td colspan="3">${o.rush ? `<b>⚡ 特急希望</b>（技工料金 +${RUSH_RATE * 100}%）` : "なし"}</td></tr>
       </table>
       <table class="items-tbl">
-        <tr><th>補綴物（使用材料）・部位</th><th style="width:4.2em">シェード</th><th style="width:2.6em;text-align:right">本数</th><th style="width:6em;text-align:right">金額</th></tr>
+        <tr><th>補綴物（使用材料）・部位</th><th style="width:4.2em">シェード</th><th style="width:2.6em;text-align:right">本数</th><th style="width:6em;text-align:right">技工料金</th></tr>
         ${rows}
-        <tr><td colspan="3" style="text-align:right;font-weight:600">合計</td><td class="num" style="text-align:right;font-weight:700">¥${total.toLocaleString()}</td></tr>
+        ${t.rush ? `<tr><td colspan="3" style="text-align:right">小計</td><td class="num" style="text-align:right">¥${t.base.toLocaleString()}</td></tr>
+        <tr><td colspan="3" style="text-align:right">特急加算（+${RUSH_RATE * 100}%）</td><td class="num" style="text-align:right">¥${t.rush.toLocaleString()}</td></tr>` : ""}
+        <tr><td colspan="3" style="text-align:right;font-weight:600">合計</td><td class="num" style="text-align:right;font-weight:700">¥${t.total.toLocaleString()}</td></tr>
       </table>
       <div style="font-size:11px;color:#555;margin-bottom:2px">《 設計・指示事項 》</div>
       <div class="note-box">${esc(o.note || "")}</div>
+      <table style="margin-top:4px">
+        <tr><th style="width:7em">Drチェック</th>
+          <td>${o.drChecked
+            ? `<b>☑ 確認済み</b>　${esc(o.drCheckedBy || o.doctor)}　${o.drCheckedAt ? fmtJPFull(o.drCheckedAt) : ""}`
+            : "☐ 未確認　（Dr確認欄）"}</td></tr>
+      </table>
       <div class="fine">
         ■ 再治療の場合、○をつけてください。　① 再imp（一度も作製していないケース）　② 再製（補綴物を作製したケース）　③ 再治療（補綴除去して、再度補綴物を作り直すケース）<br>
         ■ 再治療理由：不適合 ・ 割れた ・ かけた ・ 印象問題 ・ 歯の移動 ・ 模型問題 ・ その他<br>
@@ -977,6 +1058,7 @@ function viewSheet() {
         TEL：000-0000-0000 ／ 〒000-0000 ○○県○○市○○ 0-0-0（デモ用ダミー）</div>
     </div>
     <div class="doc-actions">
+      <button class="btn ghost" style="flex:0 0 auto;padding:12px 14px" data-act="print-help" aria-label="保存方法">？</button>
       <button class="btn primary" data-act="print-doc">🖨 印刷 / PDF保存</button>
     </div>
     <p class="no-print" style="font-size:11px;color:var(--muted)">本番接続後は、発注と同時にこのPDFが患者フォルダ（Drive）へ自動保存され、BFL側でも同じものが見られます。</p>
@@ -1043,12 +1125,43 @@ function viewWarranty() {
     </div>
     <div class="doc-actions">
       <button class="btn ghost" data-act="open-sig">✍️ ${o.signature ? "署名をやり直す" : "署名する"}</button>
+      <button class="btn ghost" style="flex:0 0 auto;padding:12px 14px" data-act="print-help" aria-label="保存方法">？</button>
       <button class="btn primary" data-act="print-doc">🖨 印刷 / PDF保存</button>
     </div>
     <a class="linkline no-print" href="${WARRANTY_TERMS_PDF}" target="_blank" rel="noopener" style="padding-left:2px">📄 保証規約（裏面）PDF（デモ・リンク無効）<span class="arrow">${IC.ext}</span></a>
     <p class="no-print" style="font-size:11px;color:var(--muted);margin-top:8px">本番接続後は、署名済み保証書PDF（表・裏）が患者フォルダ（Drive）へ自動保存されます。印刷してのお渡し・データでのお渡しどちらも可能です。</p>
   </main>`;
 }
+// 印刷／PDF保存。端末によっては印刷ダイアログが出ないことがあるため、
+// 失敗しても無反応にならないよう必ず案内を出す（スタッフから「押しても進めない」との指摘に対応）
+function printDoc() {
+  let ok = true;
+  try {
+    if (typeof window.print !== "function") ok = false;
+    else window.print();
+  } catch (e) { ok = false; }
+  if (!ok) { state.modal = printHelpHTML(); render(); return; }
+  // ダイアログが出たかは検知できないため、出なかった場合の導線を数秒だけ出す
+  showToast("印刷画面が出ない場合はこちら", () => { state.modal = printHelpHTML(); render(); }, "保存方法");
+}
+function printHelpHTML() {
+  return `<div class="modal-bg" data-modal="close"><div class="modal" style="max-height:82vh;overflow-y:auto">
+    <h3>🖨 印刷・PDF保存のしかた</h3>
+    <p>お使いの端末に合わせてお試しください。</p>
+    <div style="font-size:13px;line-height:1.9">
+      <b>iPhone / iPad（Safari）</b><br>
+      画面下の <b>共有ボタン（□に↑）</b> → <b>プリント</b> → プレビューを<b>ピンチで拡大</b>すると
+      PDFになります → 共有 → 「ファイルに保存」または「Driveに保存」<br><br>
+      <b>Android（Chrome）</b><br>
+      右上の <b>⋮</b> → <b>共有</b> → <b>印刷</b> → 送信先を「<b>PDF に保存</b>」<br><br>
+      <b>パソコン</b><br>
+      <b>Ctrl+P</b>（Macは <b>⌘+P</b>）→ 送信先を「PDF に保存」
+    </div>
+    <p style="margin-top:12px;font-size:12px">本番接続後は、この操作をしなくても指示書・保証書のPDFが患者フォルダ（Drive）へ自動保存されます。</p>
+    <div class="btns"><button class="btn primary" data-modal="close">閉じる</button></div>
+  </div></div>`;
+}
+
 // ---------- セット時フィードバック（既存DBの BFL評価 / BFL評価コメント 列に相当） ----------
 const FB_ITEMS = [["contact", "コンタクト"], ["margin", "マージン"], ["occlusion", "咬合"]];
 let fbDraft = null;
@@ -1155,8 +1268,17 @@ function newDraft() {
   return {
     clinic: state.clinic, doctor: "", karte: "", patient: "",
     impressionDate: todayISO(), shipDate: todayISO(), apptDate: "", note: "",
+    rush: false, drChecked: false,
     items: [{ prosId: null, cat: null, teeth: [], shade: "", qty: 1, photoInDrive: false }],
   };
+}
+// 金額表示（特急ONなら本体＋20%の内訳を出す）
+function amountLabel(o, it) {
+  const b = itemBase(o, it);
+  if (b == null) return "—";
+  const r = itemRush(o, it);
+  return r ? `¥${(b + r).toLocaleString()}<br><span style="font-size:11px;font-weight:600;color:var(--muted)">本体 ¥${b.toLocaleString()} + 特急 ¥${r.toLocaleString()}</span>`
+           : `¥${b.toLocaleString()}`;
 }
 function viewNew() {
   if (!draft) draft = newDraft();
@@ -1175,7 +1297,7 @@ function viewNew() {
       </select></div>` : "";
     const needTeeth = p && (!p.noTeeth || it.forceTeeth);
     const dd = p ? deliveryISO(d.shipDate || d.impressionDate, p, d.impressionDate) : null;
-    const unit = p ? ((d.clinic === "国東" && p.kunisaki != null) ? p.kunisaki : p.price) : null;
+    const unit = unitPrice(d.clinic, p);
     return `<div class="item-card">
       <div class="ic-head"><span class="t">技工物 ${i + 1}</span>
         ${d.items.length > 1 ? `<button type="button" class="rm" data-rm-item="${i}">削除</button>` : ""}</div>
@@ -1191,8 +1313,8 @@ function viewNew() {
         <label class="check"><input type="checkbox" data-photo="${i}" ${it.photoInDrive ? "checked" : ""}>シェード写真はDriveにあり（一眼撮影）</label>
         <div class="row2" style="margin-top:8px">
           <div class="field" style="margin-bottom:0"><label>本数</label><input type="number" min="1" inputmode="numeric" value="${it.qty}" data-qty="${i}"></div>
-          <div class="field" style="margin-bottom:0"><label>金額</label>
-            <div style="padding:10px 2px;font-weight:700" class="num" data-amount="${i}">${unit != null ? "¥" + (unit * (it.qty || 1)).toLocaleString() : "—"}</div></div>
+          <div class="field" style="margin-bottom:0"><label>金額${d.rush ? "（特急込み）" : ""}</label>
+            <div style="padding:10px 2px;font-weight:700" class="num" data-amount="${i}">${amountLabel(d, it)}</div></div>
         </div>
         <div class="due-preview">納期 <b class="num">${fmtJP(dd)}</b>
           <span class="src">${esc(nakaSrcLabel(p, d.clinic))}</span></div>
@@ -1228,7 +1350,8 @@ function viewNew() {
         <div class="field"><label>印象日</label><input type="date" id="f-imp" value="${esc(d.impressionDate)}"></div>
         <div class="field"><label>医院発送日</label><input type="date" id="f-ship" value="${esc(d.shipDate)}"></div>
       </div>
-      <div class="field" style="margin-bottom:0"><label>患者予約日（セット予定）</label><input type="date" id="f-appt" value="${esc(d.apptDate)}"></div>
+      <div class="field"><label>患者予約日（セット予定）</label><input type="date" id="f-appt" value="${esc(d.apptDate)}"></div>
+      <label class="check" style="margin-bottom:0"><input type="checkbox" id="f-rush" ${d.rush ? "checked" : ""}>⚡ 特急でお願いする<span style="color:var(--muted);font-size:12px">（技工料金 +${RUSH_RATE * 100}%）</span></label>
     </div>
 
     <div class="section-label">技工物 — 複数まとめて登録できます</div>
@@ -1238,9 +1361,31 @@ function viewNew() {
     <div class="card">
       <div class="field" style="margin-bottom:0"><label>Drコメント・備考</label><textarea id="f-note" placeholder="BFLへの申し送り">${esc(d.note)}</textarea></div>
     </div>
+
+    ${totalsCard(d)}
+
+    <div class="card" style="border:1.5px solid ${d.drChecked ? "var(--accent)" : "var(--line)"}">
+      <label class="check" style="padding:2px 0">
+        <input type="checkbox" id="f-drcheck" ${d.drChecked ? "checked" : ""}>
+        <span><b>Dr確認済み</b><br><span style="font-size:12px;color:var(--muted)">紙の指示書と同じく、最後にDrが内容を確認したらチェックしてください</span></span>
+      </label>
+    </div>
     ${apptWarning(d)}
     <div class="sticky-save"><button class="btn primary" style="width:100%;padding:15px 0" data-act="save-order">この内容で発注を登録</button></div>
   </main>`;
+}
+// 合計金額（特急の内訳つき）
+function totalsCard(o) {
+  if (!o.items.some(it => it.prosId)) return "";
+  const t = orderTotals(o);
+  return `<div class="card">
+    <dl class="kv">
+      <dt>技工料金</dt><dd class="num">¥${t.base.toLocaleString()}</dd>
+      ${t.rush ? `<dt>特急加算（+${RUSH_RATE * 100}%）</dt><dd class="num">¥${t.rush.toLocaleString()}</dd>` : ""}
+      <dt><b>合計</b></dt><dd class="num"><b>¥${t.total.toLocaleString()}</b></dd>
+    </dl>
+    ${t.unknown ? `<p style="font-size:11px;color:var(--muted);margin-top:6px">※ ${t.unknown}件は単価未設定のため合計に含めていません（BFLに要確認）</p>` : ""}
+  </div>`;
 }
 function apptWarning(d) {
   if (!d.apptDate) return "";
@@ -1257,18 +1402,26 @@ function apptWarning(d) {
 }
 
 // ---------- 描画: 納期表 ----------
-function viewNoki() {
+// 納期表の行（発送日と検索語から生成。検索は品目名・カテゴリ・別名にヒット）
+function nokiRowsHTML() {
   const ship = state.nokiShip;
-  const pdfs = NOKI_PDFS[state.clinic] || [];
-  const rows = CATEGORIES.map(cat => {
-    const items = PROSTHETICS.filter(p => p.cat === cat && (p.naka != null || p.cal));
+  const q = state.nokiSearch.trim().toLowerCase();
+  const hit = p => !q || `${p.name} ${p.cat} ${p.alias || ""}`.toLowerCase().includes(q);
+  return CATEGORIES.map(cat => {
+    const items = PROSTHETICS.filter(p => p.cat === cat && (p.naka != null || p.cal) && hit(p));
     if (!items.length) return "";
     return `<tr class="cat-row"><td colspan="2">${esc(cat)}</td></tr>` + items.map(p => {
       const d = deliveryISO(ship, p, ship);
-      return `<tr><td>${esc(p.name)}<span class="naka">${p.cal ? `暦日${p.cal}日` : `中${p.naka}日${p.est ? "・目安" : ""}`}</span></td>
+      return `<tr><td>${esc(p.name)}<span class="naka">${p.cal ? `暦日${p.cal}日` : `中${p.naka}日${p.est ? "・目安" : ""}`}</span>
+        ${p.note ? `<br><span class="naka" style="margin-left:0">※ ${esc(p.note)}</span>` : ""}</td>
         <td class="num"><b>${fmtJP(d)}</b></td></tr>`;
     }).join("");
-  }).join("");
+  }).join("") || '<tr><td colspan="2" style="color:var(--muted);padding:20px 6px;text-align:center">該当する技工物がありません</td></tr>';
+}
+function viewNoki() {
+  const ship = state.nokiShip;
+  const pdfs = NOKI_PDFS[state.clinic] || [];
+  const rows = nokiRowsHTML();
 
   return `
   <div class="top">
@@ -1284,6 +1437,8 @@ function viewNoki() {
     <div class="section-label">納期の逆引き — この日に発送したら？</div>
     <div class="card">
       <div class="field"><label>医院発送日</label><input type="date" id="noki-ship" value="${esc(ship)}"></div>
+      <div class="field"><label>技工物を検索</label>
+        <input type="search" id="noki-search" placeholder="例: バイオスター / 矯正 / クラウン" value="${esc(state.nokiSearch)}"></div>
       <div style="overflow-x:auto"><table class="noki-table"><thead><tr><th>技工物</th><th>納品日</th></tr></thead><tbody>${rows}</tbody></table></div>
       <p style="font-size:11px;color:var(--muted);margin-top:10px">中X日は${esc(NAKA_SOURCE[state.clinic] || "納期表")}の値。休業日（土日・盆・年末年始等）を除いた営業日で計算しています。納期表は医院×月ごとに発行されるため、本番では各院・各月の値を取り込みます。正式な納期は公式PDFをご確認ください。</p>
     </div>
@@ -1311,7 +1466,7 @@ function render() {
   html += nav();
   if (state.toast) {
     html += `<div class="toast" role="status"><span>${esc(state.toast.msg)}</span>
-      ${state.toast.undoFn ? '<button data-act="toast-undo">元に戻す</button>' : ""}</div>`;
+      ${state.toast.undoFn ? `<button data-act="toast-undo">${esc(state.toast.label)}</button>` : ""}</div>`;
   }
   if (state.modal) html += state.modal;
   app.innerHTML = html;
@@ -1397,9 +1552,11 @@ document.addEventListener("click", (e) => {
 
   switch (el.dataset.act) {
     case "toggle-search": state.searchOpen = !state.searchOpen; if (!state.searchOpen) state.search = ""; render(); break;
+    case "status-help": state.modal = statusHelpHTML(); render(); break;
     case "go-home": state.view = "home"; render(); break;
     case "go-detail": state.view = "detail"; render(); break;
-    case "print-doc": window.print(); break;
+    case "print-doc": printDoc(); break;
+    case "print-help": state.modal = printHelpHTML(); render(); break;
     case "open-sig": state.modal = sigModalHTML(); render(); break;
     case "sig-clear": {
       const c = $("#sig-pad");
@@ -1444,7 +1601,7 @@ document.addEventListener("click", (e) => {
     }
     case "resend": {
       state.modal = `<div class="modal-bg" data-modal="close"><div class="modal">
-        <h3>⚠️ 要再送にしますか？</h3><p>印象不備などでやり直しが必要な場合に使います。医院に再送依頼が表示されます。</p>
+        <h3>⚠️ 要再送にしますか？</h3><p>${esc(ST[99].desc)}</p>
         <div class="btns"><button class="btn ghost" data-modal="close">やめる</button>
         <button class="btn primary" data-modal="resend-yes" style="background:var(--danger);color:#fff">要再送にする</button></div>
       </div></div>`;
@@ -1533,6 +1690,13 @@ document.addEventListener("input", (e) => {
     return;
   }
   if (t.id === "f-fb-comment" && fbDraft) { fbDraft.comment = t.value; return; }
+  if (t.id === "noki-search") {
+    // 入力欄を作り直さず表だけ差し替える（IME・カーソル位置を壊さない）
+    state.nokiSearch = t.value;
+    const tbody = document.querySelector(".noki-table tbody");
+    if (tbody) tbody.innerHTML = nokiRowsHTML();
+    return;
+  }
   if (!draft && t.id !== "noki-ship") return;
   switch (t.id) {
     case "f-karte": draft.karte = t.value; return;
@@ -1542,10 +1706,8 @@ document.addEventListener("input", (e) => {
   if (t.dataset.qty != null) {
     const it = draft.items[Number(t.dataset.qty)];
     it.qty = Math.max(1, Number(t.value) || 1);
-    const p = PRO[it.prosId];
-    const unit = p ? ((draft.clinic === "国東" && p.kunisaki != null) ? p.kunisaki : p.price) : null;
     const amt = document.querySelector(`[data-amount="${t.dataset.qty}"]`);
-    if (amt) amt.textContent = unit != null ? "¥" + (unit * it.qty).toLocaleString() : "—";
+    if (amt) amt.innerHTML = amountLabel(draft, it);
   }
 });
 document.addEventListener("change", (e) => {
@@ -1558,6 +1720,8 @@ document.addEventListener("change", (e) => {
     case "f-imp": draft.impressionDate = t.value; render(); return;
     case "f-ship": draft.shipDate = t.value; render(); return;
     case "f-appt": draft.apptDate = t.value; render(); return;
+    case "f-rush": draft.rush = t.checked; render(); return;
+    case "f-drcheck": draft.drChecked = t.checked; render(); return;
   }
   if (t.dataset.pros != null) {
     const it = draft.items[Number(t.dataset.pros)];
@@ -1585,6 +1749,7 @@ function saveOrder() {
   if (missTeeth.length && !confirm("部位（歯式）が未選択の技工物があります。このまま登録しますか？")) return;
   const photoMismatch = d.items.some(it => it.prosId && it.shade === "写真あり" && !it.photoInDrive);
   if (photoMismatch && !confirm("シェード「写真あり」の技工物に「シェード写真はDriveにあり」のチェックがありません。このまま登録しますか？")) return;
+  if (!d.drChecked && !confirm("「Dr確認済み」のチェックがありません。このまま登録しますか？")) return;
 
   const dateKey = todayISO().replaceAll("-", "");
   const seq = db.orders.filter(o => o.no.startsWith(dateKey)).length + 1;
@@ -1593,7 +1758,9 @@ function saveOrder() {
     no, clinic: d.clinic, doctor: d.doctor, karte: d.karte.trim(), patient: d.patient.trim(),
     items: d.items.map(it => ({ prosId: it.prosId, teeth: sortTeeth(it.teeth), shade: it.shade, qty: it.qty, photoInDrive: it.photoInDrive })),
     note: d.note.trim(), impressionDate: d.impressionDate, shipDate: d.shipDate,
-    apptDate: d.apptDate, status: 0, dates: {}, history: [], undoStack: [],
+    apptDate: d.apptDate, rush: d.rush,
+    drChecked: d.drChecked, drCheckedBy: d.drChecked ? d.doctor : "", drCheckedAt: d.drChecked ? todayISO() : "",
+    status: 0, dates: {}, history: [], undoStack: [],
   });
   save();
   draft = null;

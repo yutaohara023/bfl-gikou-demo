@@ -220,6 +220,13 @@ a.linkline:visited{color:var(--ink)}
 /* ---------- セット時フィードバック ---------- */
 .implant-box{border:1.5px solid color-mix(in srgb,var(--warn) 45%,var(--line));border-radius:10px;padding:11px 12px;margin-bottom:12px;background:color-mix(in srgb,var(--warn) 6%,var(--surface))}
 .implant-box .ib-head{font-weight:700;font-size:12.5px;color:var(--warn);letter-spacing:.06em;margin-bottom:8px}
+/* 径はメーカーのカラーコードで選ぶ（アストラテック EV: 3.0緑 3.6紫 4.2黄 4.8青 5.4茶） */
+.dia-chips{display:flex;flex-wrap:wrap;gap:6px}
+.dia-chips button{display:flex;align-items:center;gap:5px;padding:7px 11px;border-radius:9px;border:1.5px solid var(--line);background:var(--surface);font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.dia-chips button .dia-dot{width:13px;height:13px;border-radius:50%;background:var(--dia,var(--muted));border:1px solid rgba(0,0,0,.15)}
+.dia-chips button .dia-n{font-size:10.5px;font-weight:600;color:var(--muted)}
+.dia-chips button.on{border-color:var(--dia,var(--accent));background:color-mix(in srgb,var(--dia,var(--accent)) 14%,var(--surface))}
+.dia-chips button.on .dia-n{color:var(--ink)}
 .bfl-box{border:1.5px solid var(--accent);border-radius:var(--radius);padding:14px;margin-bottom:10px;background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
 .bfl-box .bb-head{font-weight:700;font-size:12.5px;color:var(--accent);letter-spacing:.06em;margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .role-seg{display:flex;gap:4px;padding:0 16px 8px}
@@ -384,10 +391,35 @@ const TECHNICIANS = ["BFL", "星野綾子"];
 const RESEND_REASONS = ["印象不良（変形）", "マージン出ていない", "バイト合っていない", "その他"];
 // 製作中止の理由（BFL質問②）
 const CANCEL_REASONS = ["患者都合", "治療方針の変更", "重複発注", "その他"];
-// インプラント仕様（BFL希望3）。暫定の候補なのでBFLに確認して差し替える
-const IMPLANT_MAKERS = ["ストローマン", "ノーベルバイオケア", "アストラテック", "オステム", "プラトン", "ジンマー", "その他"];
-const IMPLANT_KINDS = ["ボーンレベル", "ティッシュレベル", "BLX", "テーパード", "その他"];
-const IMPLANT_DIAMETERS = ["3.0", "3.3", "3.5", "3.75", "4.0", "4.1", "4.3", "4.8", "5.0", "その他"];
+// インプラント仕様（BFL希望3）。メーカーを選ぶと種類・径がそのシステムのものに切り替わる。
+// 径の色はメーカーのカラーコード（実物のパーツと同じ色）。印刷では色名も併記する。
+// 主に使用しているのはアストラテック オッセオスピード EV。
+const IMPLANT_SYSTEMS = {
+  "アストラテック": {
+    // 主に使うのはオッセオスピード EV のストレートとプロファイル
+    kinds: ["オッセオスピード EV ストレート", "オッセオスピード EV プロファイル", "その他"],
+    dia: [
+      { v: "3.0", c: "#3AAA5A", n: "緑" },
+      { v: "3.6", c: "#8E2C74", n: "紫" },
+      { v: "4.2", c: "#E3AF12", n: "黄" },
+      { v: "4.8", c: "#4C8FCB", n: "青" },
+      { v: "5.4", c: "#6B3A28", n: "茶" },
+    ],
+  },
+  "ストローマン": {
+    kinds: ["ボーンレベル", "ボーンレベル テーパード", "BLX", "ティッシュレベル", "その他"],
+    dia: [{ v: "3.3" }, { v: "4.1" }, { v: "4.8" }, { v: "その他" }],
+  },
+  "ノーベルバイオケア": {
+    kinds: ["NobelActive", "NobelParallel", "NobelReplace", "その他"],
+    dia: [{ v: "3.0" }, { v: "3.5" }, { v: "4.3" }, { v: "5.0" }, { v: "その他" }],
+  },
+  "その他": { kinds: ["その他"], dia: [{ v: "その他" }] },
+};
+const IMPLANT_MAKERS = Object.keys(IMPLANT_SYSTEMS);
+const DEFAULT_IMPLANT_MAKER = "アストラテック";
+function implantSystem(maker) { return IMPLANT_SYSTEMS[maker] || IMPLANT_SYSTEMS["その他"]; }
+function diaInfo(maker, v) { return implantSystem(maker).dia.find(d => d.v === v) || null; }
 
 // 補綴物マスタ（既存DBの品目 + BFL納期表の「中X日」）
 // naka: 納期表の中X日（営業日）/ cal: 暦日計算（印象日からX日）/ price: 技工料金
@@ -583,7 +615,7 @@ function seedOrders() {
     {
       no: "20260718-0001", clinic: "丸の内", doctor: "Dr C", karte: "M02001", patient: "タナカ イチロウ",
       items: [{ prosId: 45, teeth: ["右上1","左上1"], teethType: { "右上1": "implant", "左上1": "implant" }, shade: "写真あり", qty: 2, photoInDrive: true,
-        implant: { maker: "ストローマン", kind: "ボーンレベル", dia: "4.1", note: "スクリュー固定でお願いします" } }],
+        implant: { maker: "アストラテック", kind: "オッセオスピード EV ストレート", dia: "4.2", note: "スクリュー固定でお願いします" } }],
       note: "写真はDriveのシェードフォルダに。", impressionDate: "2026-07-17", shipDate: "2026-07-18",
       apptDate: "2026-08-05", status: 3, dates: { bflArrival: "2026-07-20" }, bflDueDate: "2026-08-11", technician: "星野綾子",
       history: [
@@ -1196,7 +1228,7 @@ function viewSheet() {
         <table style="margin-bottom:10px">
           <tr><th>① メーカー</th><td>${esc(implantValue(v, "maker") || "—")}</td></tr>
           <tr><th>② 種類</th><td>${esc(implantValue(v, "kind") || "—")}</td></tr>
-          <tr><th>③ 径</th><td>${esc(implantValue(v, "dia") ? implantValue(v, "dia") + " mm" : "—")}</td></tr>
+          <tr><th>③ 径</th><td>${esc(diaLabel(v) || "—")}</td></tr>
           <tr><th>備考</th><td>${esc(v.note || "")}</td></tr>
         </table>`;
       }).join("")}
@@ -1475,6 +1507,8 @@ function newDraft() {
 // インプラント専用の指定欄（BFL希望3: 設計・指示事項に書かれず不明なことが多いため独立させる）
 function implantFields(i, it) {
   const v = it.implant || {};
+  const maker = v.maker || DEFAULT_IMPLANT_MAKER;
+  const sys = implantSystem(maker);
   const sel = (key, label, opts) => `<div class="field" style="margin-bottom:8px"><label>${label}</label>
     <select data-imp="${key}" data-item="${i}">
       <option value="">選択してください</option>
@@ -1482,14 +1516,33 @@ function implantFields(i, it) {
     </select>
     ${v[key] === "その他" ? `<input type="text" style="margin-top:6px" placeholder="${label}を入力" data-impfree="${key}" data-item="${i}" value="${esc(v[key + "Free"] || "")}">` : ""}
   </div>`;
+  // 径はメーカーのカラーコードつきチップで選ぶ（実物のパーツと同じ色で選び間違いを防ぐ）
+  const dias = `<div class="field" style="margin-bottom:8px"><label>③ 径（mm）</label>
+    <div class="dia-chips">${sys.dia.map(d =>
+      `<button type="button" class="${v.dia === d.v ? "on" : ""}" data-imp-dia="${esc(d.v)}" data-item="${i}"
+        ${d.c ? `style="--dia:${d.c}"` : ""}>${d.c ? '<span class="dia-dot"></span>' : ""}${esc(d.v)}${d.n ? `<span class="dia-n">${d.n}</span>` : ""}</button>`).join("")}</div>
+    ${v.dia === "その他" ? `<input type="text" style="margin-top:6px" placeholder="径を入力" data-impfree="dia" data-item="${i}" value="${esc(v.diaFree || "")}">` : ""}
+  </div>`;
   return `<div class="implant-box">
     <div class="ib-head">【インプラント】</div>
     ${sel("maker", "① メーカー", IMPLANT_MAKERS)}
-    ${sel("kind", "② 種類", IMPLANT_KINDS)}
-    ${sel("dia", "③ 径（mm）", IMPLANT_DIAMETERS)}
+    ${sel("kind", "② 種類", sys.kinds)}
+    ${dias}
     <div class="field" style="margin-bottom:0"><label>備考</label>
       <input type="text" placeholder="連結・アバットメント指定など" data-impnote="${i}" value="${esc(v.note || "")}"></div>
   </div>`;
+}
+function ensureImplant(it) {
+  if (!it.implant) it.implant = { maker: DEFAULT_IMPLANT_MAKER };
+  else if (!it.implant.maker) it.implant.maker = DEFAULT_IMPLANT_MAKER;
+  return it;
+}
+// 径の表示。カラーコードのあるシステムは色名も併記する（白黒印刷でも伝わるように）
+function diaLabel(v) {
+  const d = implantValue(v, "dia");
+  if (!d) return "";
+  const info = diaInfo(v.maker, v.dia);
+  return info && info.n ? `${d} mm（${info.n}）` : `${d} mm`;
 }
 function implantValue(v, key) {
   if (!v || !v[key]) return "";
@@ -1541,7 +1594,7 @@ function viewNew() {
           <div class="field" style="margin-bottom:0"><label>金額${d.rush ? "（特急込み）" : ""}</label>
             <div style="padding:10px 2px;font-weight:700" class="num" data-amount="${i}">${amountLabel(d, it)}</div></div>
         </div>
-        ${isImplantItem(it) ? implantFields(i, it) : ""}
+        ${isImplantItem(it) ? implantFields(i, ensureImplant(it)) : ""}
         <div class="due-preview">納期の目安 <b class="num">${fmtJP(dd)}</b>
           <span class="src">${esc(nakaSrcLabel(p, d.clinic))}</span></div>
         <p style="font-size:11px;color:var(--muted);margin-top:4px">※ 確定の納品日はBFLが設定します</p>
@@ -1704,7 +1757,7 @@ function render() {
 
 // ---------- イベント ----------
 document.addEventListener("click", (e) => {
-  const el = e.target.closest("[data-nav],[data-clinic],[data-filter],[data-open],[data-act],[data-status-to],[data-draft-clinic],[data-cat],[data-shade],[data-rm-item],[data-rm-tooth],[data-clear-teeth],[data-show-teeth],[data-modal],[data-tooth],[data-doc],[data-fb-rate],[data-paint],[data-role]");
+  const el = e.target.closest("[data-nav],[data-clinic],[data-filter],[data-open],[data-act],[data-status-to],[data-draft-clinic],[data-cat],[data-shade],[data-rm-item],[data-rm-tooth],[data-clear-teeth],[data-show-teeth],[data-modal],[data-tooth],[data-doc],[data-fb-rate],[data-paint],[data-role],[data-imp-dia]");
   if (!el) return;
 
   if (el.dataset.role) { state.role = el.dataset.role; render(); return; }
@@ -1717,6 +1770,16 @@ document.addEventListener("click", (e) => {
       if (cur) fbDraft.comment = cur.value; // 再描画前にコメントを退避
       fbDraft[el.dataset.fbRate] = Number(el.dataset.val);
       state.modal = feedbackModalHTML();
+      render();
+    }
+    return;
+  }
+
+  if (el.dataset.impDia) {
+    const it = draft && draft.items[Number(el.dataset.item)];
+    if (it) {
+      it.implant = it.implant || { maker: DEFAULT_IMPLANT_MAKER };
+      it.implant.dia = it.implant.dia === el.dataset.impDia ? "" : el.dataset.impDia;
       render();
     }
     return;
@@ -1992,7 +2055,13 @@ document.addEventListener("change", (e) => {
   if (!draft) return;
   if (t.dataset.imp != null) {
     const it = draft.items[Number(t.dataset.item)];
-    if (it) { it.implant = it.implant || {}; it.implant[t.dataset.imp] = t.value; render(); }
+    if (it) {
+      it.implant = it.implant || {};
+      it.implant[t.dataset.imp] = t.value;
+      // メーカーを変えたら別システムの種類・径が残らないようクリアする
+      if (t.dataset.imp === "maker") { it.implant.kind = ""; it.implant.dia = ""; it.implant.diaFree = ""; }
+      render();
+    }
     return;
   }
   switch (t.id) {

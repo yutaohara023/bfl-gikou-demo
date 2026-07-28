@@ -385,8 +385,8 @@ const STAMP_FIELD = { 3: "bflArrival", 4: "bflShip", 5: "delivered", 6: "setDone
 const SHADES = ["A1","A2","A3","A3.5","A4","B1","B2","B3","B4","C1","C2","C3","C4","D2","D3","D4","写真あり","前回と同じ"];
 
 // ---------- BFL側のマスタ ----------
-// 担当技工士（既存DBの担当者マスタ・BFL所属）
-const TECHNICIANS = ["BFL", "星野綾子"];
+// 担当技工士（BFLの技工士3名。星野綾子さんは事務のため技工士の割当先には出さない）
+const TECHNICIANS = ["牧口正博", "太田沙耶", "黒田萌友"];
 // 要再送の理由（BFL希望7）
 const RESEND_REASONS = ["印象不良（変形）", "マージン出ていない", "バイト合っていない", "その他"];
 // 製作中止の理由（BFL質問②）
@@ -594,7 +594,7 @@ function toothKeyRank(t) {
 function sortTeeth(list) { return [...list].sort((a, b) => toothKeyRank(a) - toothKeyRank(b)); }
 
 // ---------- モックデータ（患者はすべて架空） ----------
-const SEED_VERSION = 6;
+const SEED_VERSION = 7;
 function seedOrders() {
   return [
     {
@@ -606,7 +606,7 @@ function seedOrders() {
       note: "セメントはいつも通りで。", drChecked: true, drCheckedBy: "Dr B", drCheckedAt: "2026-07-22",
       impressionDate: "2026-07-22", shipDate: "2026-07-22",
       apptDate: "2026-08-07", status: 3, dates: { bflArrival: "2026-07-24" },
-      bflDueDate: "2026-08-06", technician: "星野綾子", bflNote: "コンタクトを強めにしてあります。調整をお願いします。",
+      bflDueDate: "2026-08-06", technician: "太田沙耶", bflNote: "コンタクトを強めにしてあります。調整をお願いします。",
       history: [
         { at: "2026-07-22 18:02", from: 0, to: 1, by: "丸の内" },
         { at: "2026-07-24 09:15", from: 1, to: 3, by: "BFL" },
@@ -617,7 +617,7 @@ function seedOrders() {
       items: [{ prosId: 45, teeth: ["右上1","左上1"], teethType: { "右上1": "implant", "左上1": "implant" }, shade: "写真あり", qty: 2, photoInDrive: true,
         implant: { maker: "アストラテック", kind: "オッセオスピード EV ストレート", dia: "4.2", note: "スクリュー固定でお願いします" } }],
       note: "写真はDriveのシェードフォルダに。", impressionDate: "2026-07-17", shipDate: "2026-07-18",
-      apptDate: "2026-08-05", status: 3, dates: { bflArrival: "2026-07-20" }, bflDueDate: "2026-08-11", technician: "星野綾子",
+      apptDate: "2026-08-05", status: 3, dates: { bflArrival: "2026-07-20" }, bflDueDate: "2026-08-11", technician: "黒田萌友",
       history: [
         { at: "2026-07-18 17:40", from: 0, to: 1, by: "丸の内" },
         { at: "2026-07-20 09:05", from: 1, to: 3, by: "BFL" },
@@ -629,7 +629,7 @@ function seedOrders() {
       note: "特急でお願いします。", rush: true, drChecked: true, drCheckedBy: "Dr A", drCheckedAt: "2026-07-15",
       impressionDate: "2026-07-15", shipDate: "2026-07-15",
       apptDate: "2026-07-22", status: 4, dates: { bflArrival: "2026-07-16", bflShip: "2026-07-27" },
-      bflDueDate: "2026-07-28", technician: "BFL",
+      bflDueDate: "2026-07-28", technician: "牧口正博",
       history: [
         { at: "2026-07-15 16:20", from: 0, to: 1, by: "丸の内" },
         { at: "2026-07-16 09:30", from: 1, to: 3, by: "BFL" },
@@ -641,7 +641,7 @@ function seedOrders() {
       items: [{ prosId: 30, teeth: ["左下5"], shade: "A2", qty: 1, photoInDrive: false }],
       note: "", impressionDate: "2026-07-14", shipDate: "2026-07-14",
       apptDate: "2026-07-28", status: 5, dates: { bflArrival: "2026-07-15", bflShip: "2026-07-21", delivered: "2026-07-22" },
-      bflDueDate: "2026-07-22", technician: "BFL",
+      bflDueDate: "2026-07-22", technician: "牧口正博",
       history: [
         { at: "2026-07-14 13:00", from: 0, to: 2, by: "丸の内" },
         { at: "2026-07-15 09:00", from: 2, to: 3, by: "BFL" },
@@ -666,7 +666,7 @@ function seedOrders() {
       note: "", impressionDate: "2026-07-01", shipDate: "2026-07-01",
       apptDate: "2026-07-18", status: 6,
       dates: { bflArrival: "2026-07-02", bflShip: "2026-07-15", delivered: "2026-07-16", setDone: "2026-07-18" },
-      bflDueDate: "2026-07-16", technician: "星野綾子",
+      bflDueDate: "2026-07-16", technician: "太田沙耶",
       warrantyStart: "2026-07-18", warrantyEnd: "2031-07-17",
       history: [
         { at: "2026-07-01 12:00", from: 0, to: 1, by: "丸の内" },

@@ -532,12 +532,14 @@ const DRIVE_LINKS = [
   { label: "BFL技工指示書（紙様式）", url: "#demo-no-link", icon: "📋" },
   { label: "BFL保証書", url: "#demo-no-link", icon: "📜" },
   { label: "BFLパンフレット", url: "#demo-no-link", icon: "📗" },
-  { label: "技工物DB（スプレッドシート）", url: "https://docs.google.com/spreadsheets/d/1dZooNVHvv8sSSEX3WxnJgvYHGeJChZy6P7epV3jE0N8/edit", icon: "📊" },
+  { label: "技工物DB（スプレッドシート）", url: "#demo-no-link", icon: "📊" },
   { label: "マイドライブ", url: "#demo-no-link", icon: "🗂" },
   { label: "共有ドライブ", url: "#demo-no-link", icon: "🏢" },
 ];
 // カルテ番号や患者名でDrive内を検索する（患者フォルダに直接飛ぶ）
-const driveSearch = q => `#demo-no-link"丸の内": "", "浦安": "", "国東": "" };
+const driveSearch = q => `#demo-no-link${encodeURIComponent(q)}`;
+// シェード写真（一眼）の保存先フォルダ。本番接続時に医院ごとのフォルダIDを設定する
+const SHADE_PHOTO_FOLDERS = { "丸の内": "", "浦安": "", "国東": "" };
 
 // 納期表の中X日は医院×月ごとにPDFが発行される。現状は丸の内8月版(0717ver)を転記済み。
 // 他院の値は本番で各院のPDFから取り込む（未転記の間は丸の内版を参考値として表示）

@@ -177,7 +177,7 @@ a.linkline:visited{color:var(--ink)}
 .due-preview{margin-top:10px;padding:9px 12px;border-radius:9px;background:color-mix(in srgb,var(--accent) 8%,var(--surface));font-size:13px;display:flex;align-items:baseline;gap:8px}
 .due-preview b{font-size:15px}
 .due-preview .src{margin-left:auto;font-size:11px;color:var(--muted)}
-.sticky-save{position:sticky;bottom:calc(64px + env(safe-area-inset-bottom));padding-top:6px;background:linear-gradient(transparent,var(--ground) 40%)}
+.sticky-save{position:sticky;bottom:calc(64px + env(safe-area-inset-bottom));padding-top:6px;z-index:5;background:linear-gradient(transparent,var(--ground) 40%)}
 
 /* ---------- odontogram ---------- */
 .odn{touch-action:pan-y;user-select:none;-webkit-user-select:none;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 6px 8px}
@@ -188,6 +188,20 @@ a.linkline:visited{color:var(--ink)}
 .odn-grid+.odn-grid{margin-top:4px}
 .tooth{min-height:40px;min-width:0;border:1px solid var(--line);border-radius:7px;display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--muted);background:var(--ground);position:relative;z-index:1}
 .tooth.sel{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+/* 歯式の種別（BFL希望2）: 記号＋色の両方で区別する */
+.tooth .tsym{position:absolute;top:-1px;right:2px;font-size:10px;font-style:normal;line-height:1}
+.tooth.tt-implant{background:var(--warn);border-color:var(--warn);color:#fff}
+.tooth.tt-abutment{background:var(--ink);border-color:var(--ink);color:var(--ground)}
+.tooth.tt-pontic{background:var(--surface);border-color:var(--ink);color:var(--ink);border-width:2px}
+.tt-modes{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px}
+.tt-modes button{flex:1 1 auto;padding:7px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:12px;font-weight:700;color:var(--muted)}
+.tt-modes button.on.m-unit{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tt-modes button.on.m-implant{background:var(--warn);border-color:var(--warn);color:#fff}
+.tt-modes button.on.m-abutment{background:var(--ink);border-color:var(--ink);color:var(--ground)}
+.tt-modes button.on.m-pontic{background:var(--surface);border-color:var(--ink);color:var(--ink);border-width:2px}
+.odn-readout .rt.tt-implant{background:color-mix(in srgb,var(--warn) 22%,var(--surface))}
+.odn-readout .rt.tt-abutment{background:color-mix(in srgb,var(--ink) 15%,var(--surface))}
+.odn-readout .rt.tt-pontic{background:var(--surface);border:1.5px solid var(--ink)}
 .odn-lbl{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.08em;padding:0 2px 4px}
 .odn-lbl.bottom{padding:4px 2px 0}
 .odn-readout{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-height:26px}
@@ -204,6 +218,15 @@ a.linkline:visited{color:var(--ink)}
 .naka{color:var(--muted);font-size:11.5px;margin-left:6px}
 
 /* ---------- セット時フィードバック ---------- */
+.implant-box{border:1.5px solid color-mix(in srgb,var(--warn) 45%,var(--line));border-radius:10px;padding:11px 12px;margin-bottom:12px;background:color-mix(in srgb,var(--warn) 6%,var(--surface))}
+.implant-box .ib-head{font-weight:700;font-size:12.5px;color:var(--warn);letter-spacing:.06em;margin-bottom:8px}
+.bfl-box{border:1.5px solid var(--accent);border-radius:var(--radius);padding:14px;margin-bottom:10px;background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
+.bfl-box .bb-head{font-weight:700;font-size:12.5px;color:var(--accent);letter-spacing:.06em;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.role-seg{display:flex;gap:4px;padding:0 16px 8px}
+.role-seg button{flex:1;padding:6px 0;border-radius:8px;background:var(--surface2);color:var(--muted);font-size:12px;font-weight:700}
+.role-seg button.on{background:var(--ink);color:var(--ground)}
+.sortbar{display:flex;gap:6px;padding:0 16px 10px}
+.sortbar select{flex:1;padding:7px 9px;border:1px solid var(--line);border-radius:9px;background:var(--surface);font-size:12.5px;min-height:0}
 .rate-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .rate-row .rl{width:5.5em;font-size:13px;font-weight:600}
 .rate-row .opts{flex:1;display:flex;gap:6px}
@@ -240,8 +263,15 @@ a.linkline:visited{color:var(--ink)}
 .dtc-wrap{margin:2px 0 4px;max-width:400px;margin-left:auto;margin-right:auto}
 .dtc-row{display:flex;align-items:center;justify-content:center;gap:2px;font-size:12px}
 .dtc-row+.dtc-row{border-top:1.5px solid #555;margin-top:3px;padding-top:3px}
-.dtc{flex:1 1 0;min-width:0;max-width:20px;text-align:center;color:#888;font-variant-numeric:tabular-nums}
+.dtc{flex:1 1 0;min-width:0;max-width:20px;text-align:center;color:#888;font-variant-numeric:tabular-nums;position:relative;padding-top:9px}
 .dtc.on{background:#1A1A1A;color:#fff;border-radius:4px;font-weight:700}
+.dtc .dsym{position:absolute;top:-1px;left:0;right:0;font-size:9px;font-style:normal;line-height:1;color:#1A1A1A}
+.dtc.on .dsym{color:#1A1A1A}
+/* 記号つきの種別は塗りつぶさず枠で表す（白黒印刷でも記号が読める） */
+.dtc.on.d-implant,.dtc.on.d-pontic{background:#fff;color:#1A1A1A;border:1.5px solid #1A1A1A}
+.dtc.on.d-abutment{background:#1A1A1A;color:#fff}
+.dtc.on.d-abutment .dsym{color:#1A1A1A}
+.dtc-legend{font-size:9.5px;color:#333;text-align:center;margin-top:5px}
 .dtc-mid{width:2px;flex:0 0 2px;align-self:stretch;background:#555;margin:0 3px}
 .doc-actions{display:flex;gap:8px;margin:12px 0}
 #sig-pad{width:100%;height:170px;border:1px solid var(--line);border-radius:10px;background:#fff;touch-action:none;display:block}
@@ -338,12 +368,26 @@ const STATUSES = [
     desc: "患者さんに装着し完了した状態。自費補綴はここから5年保証が始まります。" },
   { id: 99, name: "⚠️ 要再送",                short: "要再送",   color: "#FFCDD2", side: "BFL", flow: -1,
     desc: "印象の不備・模型の破損などでBFLが製作を進められず、医院からの再送（再印象・再発送）が必要な状態です。医院が再スキャン／再発送すると①②に戻り、やり直しの製作が始まります。" },
+  { id: 98, name: "🚫 製作中止",              short: "中止",     color: "#E0E0E0", side: "—", flow: -1,
+    desc: "患者都合・治療方針の変更などで製作を取りやめた状態です。一覧からは外れますが記録は残るため、あとから理由や課金の有無を確認できます。" },
 ];
 const ST = Object.fromEntries(STATUSES.map(s => [s.id, s]));
 // ステータス到達時に自動スタンプする日付フィールド
 const STAMP_FIELD = { 3: "bflArrival", 4: "bflShip", 5: "delivered", 6: "setDone" };
 
 const SHADES = ["A1","A2","A3","A3.5","A4","B1","B2","B3","B4","C1","C2","C3","C4","D2","D3","D4","写真あり","前回と同じ"];
+
+// ---------- BFL側のマスタ ----------
+// 担当技工士（既存DBの担当者マスタ・BFL所属）
+const TECHNICIANS = ["BFL", "星野綾子"];
+// 要再送の理由（BFL希望7）
+const RESEND_REASONS = ["印象不良（変形）", "マージン出ていない", "バイト合っていない", "その他"];
+// 製作中止の理由（BFL質問②）
+const CANCEL_REASONS = ["患者都合", "治療方針の変更", "重複発注", "その他"];
+// インプラント仕様（BFL希望3）。暫定の候補なのでBFLに確認して差し替える
+const IMPLANT_MAKERS = ["ストローマン", "ノーベルバイオケア", "アストラテック", "オステム", "プラトン", "ジンマー", "その他"];
+const IMPLANT_KINDS = ["ボーンレベル", "ティッシュレベル", "BLX", "テーパード", "その他"];
+const IMPLANT_DIAMETERS = ["3.0", "3.3", "3.5", "3.75", "4.0", "4.1", "4.3", "4.8", "5.0", "その他"];
 
 // 補綴物マスタ（既存DBの品目 + BFL納期表の「中X日」）
 // naka: 納期表の中X日（営業日）/ cal: 暦日計算（印象日からX日）/ price: 技工料金
@@ -357,8 +401,10 @@ const PROSTHETICS = [
   { id: 8,  cat: "プロビ",     name: "ウィング付きプロビ",        naka: 7,  price: 5000,  sig: false, est: true },
   { id: 6,  cat: "プロビコア", name: "プロビコア（1〜3本）",      naka: 5,  price: null,  sig: false },
   { id: 7,  cat: "プロビコア", name: "プロビコア（4本以上）",     naka: 6,  price: null,  sig: false },
-  { id: 9,  cat: "義歯・装置", name: "NG（ナイトガード ソフト）", naka: 5,  price: 5000,  sig: false, noTeeth: true },
-  { id: 10, cat: "義歯・装置", name: "NGハード（ナイトガード ハード）", naka: 5, price: 5000, sig: false, noTeeth: true },
+  // BFL希望8: ナイトガードはソフト／ハードを必ず選ばせる。紛らわしい総称は置かず2択のみにする
+  // dbName = 技工物DBの補綴物マスタ上の名称（書き込み時はこちらを使う）
+  { id: 9,  cat: "義歯・装置", name: "NG（ソフト）", dbName: "NG（ナイトガード ソフト）", naka: 5, price: 5000, sig: false, noTeeth: true },
+  { id: 10, cat: "義歯・装置", name: "NG（ハード）", dbName: "NGハード（ナイトガード ハード）", naka: 5, price: 5000, sig: false, noTeeth: true },
   { id: 11, cat: "義歯・装置", name: "バイオスター",              naka: 5,  price: 8000,  sig: false, noTeeth: true },
   { id: 12, cat: "義歯・装置", name: "バイオスター（装置OFF後の早め）", naka: 5, price: 9600, sig: false, noTeeth: true,
     alias: "矯正装置OFF後 きょうせい バイオスター", note: "矯正装置OFF後に早めに作るケース" },
@@ -487,6 +533,25 @@ function daysUntil(iso) {
   return Math.round((parseISO(iso) - parseISO(todayISO())) / 86400000);
 }
 
+// ---------- 歯式の記号（BFL希望2: インプラント/Brを区別できるように） ----------
+const TOOTH_TYPES = [
+  { id: "unit",     label: "作製部位",       sym: "",  desc: "通常の作製部位" },
+  { id: "implant",  label: "インプラント",   sym: "△", desc: "インプラント部位" },
+  { id: "abutment", label: "支台歯",         sym: "●", desc: "ブリッジの支台歯" },
+  { id: "pontic",   label: "ポンティック",   sym: "○", desc: "ブリッジのポンティック" },
+];
+const TT = Object.fromEntries(TOOTH_TYPES.map(t => [t.id, t]));
+function toothType(it, tooth) { return (it.teethType && it.teethType[tooth]) || "unit"; }
+function toothSym(it, tooth) { return TT[toothType(it, tooth)].sym; }
+// 部位の表示。記号つきの歯は「右上5△」のように出す
+function teethLabel(it) {
+  return sortTeeth(it.teeth).map(t => t + toothSym(it, t)).join("・");
+}
+function isImplantItem(it) {
+  const p = PRO[it.prosId];
+  return !!p && (p.cat === "インプラント" || p.cat === "インプラント上部");
+}
+
 // ---------- 歯式 ----------
 // 既存DBの表記順（右上→左上→右下→左下、各象限は1→8の昇順）に合わせる
 const QUAD_RANK = { "右上": 0, "左上": 1, "右下": 2, "左下": 3 };
@@ -497,7 +562,7 @@ function toothKeyRank(t) {
 function sortTeeth(list) { return [...list].sort((a, b) => toothKeyRank(a) - toothKeyRank(b)); }
 
 // ---------- モックデータ（患者はすべて架空） ----------
-const SEED_VERSION = 5;
+const SEED_VERSION = 6;
 function seedOrders() {
   return [
     {
@@ -509,6 +574,7 @@ function seedOrders() {
       note: "セメントはいつも通りで。", drChecked: true, drCheckedBy: "Dr B", drCheckedAt: "2026-07-22",
       impressionDate: "2026-07-22", shipDate: "2026-07-22",
       apptDate: "2026-08-07", status: 3, dates: { bflArrival: "2026-07-24" },
+      bflDueDate: "2026-08-06", technician: "星野綾子", bflNote: "コンタクトを強めにしてあります。調整をお願いします。",
       history: [
         { at: "2026-07-22 18:02", from: 0, to: 1, by: "丸の内" },
         { at: "2026-07-24 09:15", from: 1, to: 3, by: "BFL" },
@@ -516,9 +582,10 @@ function seedOrders() {
     },
     {
       no: "20260718-0001", clinic: "丸の内", doctor: "Dr C", karte: "M02001", patient: "タナカ イチロウ",
-      items: [{ prosId: 24, teeth: ["右上1","左上1"], shade: "写真あり", qty: 2, photoInDrive: true }],
+      items: [{ prosId: 45, teeth: ["右上1","左上1"], teethType: { "右上1": "implant", "左上1": "implant" }, shade: "写真あり", qty: 2, photoInDrive: true,
+        implant: { maker: "ストローマン", kind: "ボーンレベル", dia: "4.1", note: "スクリュー固定でお願いします" } }],
       note: "写真はDriveのシェードフォルダに。", impressionDate: "2026-07-17", shipDate: "2026-07-18",
-      apptDate: "2026-08-05", status: 3, dates: { bflArrival: "2026-07-20" },
+      apptDate: "2026-08-05", status: 3, dates: { bflArrival: "2026-07-20" }, bflDueDate: "2026-08-11", technician: "星野綾子",
       history: [
         { at: "2026-07-18 17:40", from: 0, to: 1, by: "丸の内" },
         { at: "2026-07-20 09:05", from: 1, to: 3, by: "BFL" },
@@ -526,10 +593,11 @@ function seedOrders() {
     },
     {
       no: "20260715-0003", clinic: "丸の内", doctor: "Dr A", karte: "M01777", patient: "ヤマモト ミドリ",
-      items: [{ prosId: 5, teeth: ["左上5","左上6","左上7"], shade: "", qty: 3, photoInDrive: false }],
+      items: [{ prosId: 5, teeth: ["左上5","左上6","左上7"], teethType: { "左上5": "abutment", "左上6": "pontic", "左上7": "abutment" }, shade: "", qty: 3, photoInDrive: false }],
       note: "特急でお願いします。", rush: true, drChecked: true, drCheckedBy: "Dr A", drCheckedAt: "2026-07-15",
       impressionDate: "2026-07-15", shipDate: "2026-07-15",
       apptDate: "2026-07-22", status: 4, dates: { bflArrival: "2026-07-16", bflShip: "2026-07-27" },
+      bflDueDate: "2026-07-28", technician: "BFL",
       history: [
         { at: "2026-07-15 16:20", from: 0, to: 1, by: "丸の内" },
         { at: "2026-07-16 09:30", from: 1, to: 3, by: "BFL" },
@@ -541,6 +609,7 @@ function seedOrders() {
       items: [{ prosId: 30, teeth: ["左下5"], shade: "A2", qty: 1, photoInDrive: false }],
       note: "", impressionDate: "2026-07-14", shipDate: "2026-07-14",
       apptDate: "2026-07-28", status: 5, dates: { bflArrival: "2026-07-15", bflShip: "2026-07-21", delivered: "2026-07-22" },
+      bflDueDate: "2026-07-22", technician: "BFL",
       history: [
         { at: "2026-07-14 13:00", from: 0, to: 2, by: "丸の内" },
         { at: "2026-07-15 09:00", from: 2, to: 3, by: "BFL" },
@@ -565,6 +634,7 @@ function seedOrders() {
       note: "", impressionDate: "2026-07-01", shipDate: "2026-07-01",
       apptDate: "2026-07-18", status: 6,
       dates: { bflArrival: "2026-07-02", bflShip: "2026-07-15", delivered: "2026-07-16", setDone: "2026-07-18" },
+      bflDueDate: "2026-07-16", technician: "星野綾子",
       warrantyStart: "2026-07-18", warrantyEnd: "2031-07-17",
       history: [
         { at: "2026-07-01 12:00", from: 0, to: 1, by: "丸の内" },
@@ -612,8 +682,12 @@ const state = {
   orderNo: null,
   nokiShip: todayISO(),
   nokiSearch: "",
+  role: "clinic",        // clinic | bfl（BFL専用項目を編集できるかの切替。本番はログインのロールで自動判定）
+  sortBy: "due",         // due | tech
+  techFilter: "all",
   toast: null,
 };
+const isBfl = () => state.role === "bfl";
 let draft = null;        // 新規発注フォームの下書き
 let toastTimer = null;
 
@@ -624,8 +698,11 @@ function statusPill(id) {
   const s = ST[id];
   return `<span class="status-pill" style="background:${s.color}">${esc(s.name)}</span>`;
 }
-function orderDelivery(o) {
-  // 発注全体の納期 = 明細の納品日の最遅
+// 一覧・詳細・帳票に出す納期は「BFLが設定した納品日」のみを正とする（BFL希望4）。
+// 納期表からの自動計算は発注時の目安と納期表画面でだけ使う。
+function orderDelivery(o) { return o.bflDueDate || null; }
+// 発注時の目安（納期表の中X日から計算した明細の最遅日）
+function estimatedDelivery(o) {
   let latest = null;
   for (const it of o.items) {
     const d = deliveryISO(o.shipDate || o.impressionDate || null, PRO[it.prosId], o.impressionDate);
@@ -777,18 +854,23 @@ function statusHelpHTML() {
 // ---------- 描画: ホーム ----------
 function homeFiltered() {
   const q = state.search.trim();
-  let orders = db.orders.filter(o => o.clinic === state.clinic && !o.deleted);
+  let orders = db.orders.filter(o => o.clinic === state.clinic);
   if (q) {
     orders = orders.filter(o =>
       o.patient.includes(q) || o.karte.toLowerCase().includes(q.toLowerCase()) || o.no.includes(q));
+  }
+  if (isBfl() && state.techFilter !== "all") {
+    orders = orders.filter(o => (o.technician || "") === (state.techFilter === "none" ? "" : state.techFilter));
   }
   return orders;
 }
 function homeChipsHTML(orders) {
   const counts = {};
   for (const o of orders) counts[o.status] = (counts[o.status] || 0) + 1;
+  // 「全て」は中止を除いた件数（中止は専用チップで確認する）
+  const active = orders.filter(o => o.status !== 98).length;
   return [
-    `<button class="chip ${state.filter === "all" ? "on" : ""}" data-filter="all">全て <span class="n num">${orders.length}</span></button>`,
+    `<button class="chip ${state.filter === "all" ? "on" : ""}" data-filter="all">全て <span class="n num">${active}</span></button>`,
     ...STATUSES.map(s =>
       `<button class="chip ${state.filter == s.id ? "on" : ""}" data-filter="${s.id}">
         <span class="dot" style="background:${s.color}"></span>${esc(s.short)} <span class="n num">${counts[s.id] || 0}</span>
@@ -796,11 +878,19 @@ function homeChipsHTML(orders) {
   ].join("");
 }
 function homeCardsHTML(orders) {
-  const shown = state.filter === "all" ? orders : orders.filter(o => o.status === Number(state.filter));
-  shown.sort((a, b) => {
-    const da = orderDelivery(a) || "9999", dbb = orderDelivery(b) || "9999";
-    return da < dbb ? -1 : da > dbb ? 1 : 0;
-  });
+  const shown = state.filter === "all"
+    ? orders.filter(o => o.status !== 98)
+    : orders.filter(o => o.status === Number(state.filter));
+  // BFL希望6: 担当技工士別／BFL納期の早い順で並べられるように
+  if (isBfl() && state.sortBy === "tech") {
+    shown.sort((a, b) => (a.technician || "￿").localeCompare(b.technician || "￿")
+      || String(orderDelivery(a) || "9999").localeCompare(String(orderDelivery(b) || "9999")));
+  } else {
+    shown.sort((a, b) => {
+      const da = orderDelivery(a) || "9999", dbb = orderDelivery(b) || "9999";
+      return da < dbb ? -1 : da > dbb ? 1 : 0;
+    });
+  }
 
   const cards = shown.map(o => {
     const due = orderDelivery(o);
@@ -816,19 +906,20 @@ function homeCardsHTML(orders) {
       </div>
       <div class="oc-items">${o.items.map(it => {
         const p = PRO[it.prosId];
-        return `<div class="oc-item"><span>${esc(p ? p.name : "?")}</span>${it.teeth.length ? `<span class="teeth-tag">${esc(sortTeeth(it.teeth).join("・"))}</span>` : ""}${it.shade ? `<span class="teeth-tag">${esc(it.shade)}</span>` : ""}</div>`;
+        return `<div class="oc-item"><span>${esc(p ? p.name : "?")}</span>${it.teeth.length ? `<span class="teeth-tag">${esc(teethLabel(it))}</span>` : ""}${it.shade ? `<span class="teeth-tag">${esc(it.shade)}</span>` : ""}</div>`;
       }).join("")}</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${statusPill(o.status)}
         ${o.rush ? '<span class="badge rush">⚡ 特急</span>' : ""}
         ${o.drChecked ? "" : '<span class="badge nocheck">Dr未確認</span>'}
       </div>
       <div class="oc-foot">
-        <span>納期 <span class="due num">${fmtJP(due)}</span></span>
+        <span>納期 <span class="due num">${due ? fmtJP(due) : "BFL設定待ち"}</span></span>
         ${late ? '<span class="badge late">納期超過</span>' : ""}
         ${soon ? '<span class="badge soon">あと' + dd + "日</span>" : ""}
         ${conflict ? '<span class="badge conflict">予約日より後</span>' : ""}
         ${o.apptDate ? `<span>予約 <span class="num">${fmtJP(o.apptDate, false)}</span></span>` : ""}
       </div>
+      ${o.technician ? `<div class="oc-foot" style="margin-top:4px"><span>技工士 <b style="color:var(--ink)">${esc(o.technician)}</b></span></div>` : ""}
     </button>`;
   }).join("");
   return shown.length ? cards : '<div class="empty">該当する案件がありません</div>';
@@ -844,14 +935,26 @@ function viewHome() {
         <button class="icon-btn" data-act="status-help" aria-label="ステータスの説明">${IC.help}</button>
       </div>
     </div>
+    <div class="role-seg">
+      <button class="${state.role === "clinic" ? "on" : ""}" data-role="clinic">🦷 医院</button>
+      <button class="${state.role === "bfl" ? "on" : ""}" data-role="bfl">🔧 BFL</button>
+    </div>
     <div class="seg">${CLINICS.map(c => `<button class="${state.clinic === c ? "on" : ""}" data-clinic="${c}">${c}</button>`).join("")}</div>
     <div class="searchbar ${state.searchOpen ? "show" : ""}"><input id="search-in" type="search" placeholder="患者名・カルテ番号・発注番号" value="${esc(state.search)}"></div>
+    ${isBfl() ? `<div class="sortbar">
+      <select id="sort-by"><option value="due" ${state.sortBy === "due" ? "selected" : ""}>納期が近い順</option><option value="tech" ${state.sortBy === "tech" ? "selected" : ""}>担当技工士別</option></select>
+      <select id="tech-filter"><option value="all">技工士: すべて</option>
+        ${TECHNICIANS.map(t => `<option ${state.techFilter === t ? "selected" : ""}>${esc(t)}</option>`).join("")}
+        <option value="none" ${state.techFilter === "none" ? "selected" : ""}>未割当</option></select>
+    </div>` : ""}
     <div class="chips" id="home-chips">${homeChipsHTML(orders)}</div>
   </div>
   <main>
     <div id="home-list">${homeCardsHTML(orders)}</div>
     <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:18px">
-      プロトタイプ（モックデータ・患者名は架空）　<button data-act="reset-demo" style="color:var(--accent);font-weight:700">データをリセット</button>
+      プロトタイプ（モックデータ・患者名は架空）<br>
+      <button data-act="reset-demo" style="color:var(--accent);font-weight:700">デモデータを初期状態に戻す</button>
+      <br><span style="font-size:10px">※ このボタンはデモ専用です。この端末のブラウザ内の練習データだけを戻します（スプレッドシートには影響しません）</span>
     </p>
   </main>`;
 }
@@ -881,8 +984,9 @@ function viewDetail() {
       ${opts.map(op => `<button class="btn primary" data-status-to="${op.to}">${esc(op.label)} →</button>`).join("")}
       <div style="display:flex;gap:8px">
         <button class="btn ghost" data-act="status-back" ${o.undoStack.length ? "" : "disabled"}>← ひとつ戻す</button>
-        ${(o.status === 3 || o.status === 4) ? '<button class="btn danger-ghost" data-act="resend">⚠️ 要再送にする</button>' : ""}
+        ${(isBfl() && (o.status === 3 || o.status === 4)) ? '<button class="btn danger-ghost" data-act="resend">⚠️ 要再送にする</button>' : ""}
       </div>
+      ${o.status !== 98 && o.status !== 6 ? '<button class="btn danger-ghost" data-act="cancel-order" style="width:100%">🚫 製作中止にする</button>' : ""}
     </div>
     <p class="resend-note">間違えて進めても「ひとつ戻す」でいつでも戻せます。すべての変更は履歴に残ります。</p>`;
 
@@ -893,7 +997,7 @@ function viewDetail() {
     return `<div class="item-block">
       <div class="ib-name">${esc(p ? p.name : "?")}</div>
       <div class="ib-row">
-        ${it.teeth.length ? `<span class="teeth-tag">${esc(sortTeeth(it.teeth).join("・"))}</span>` : "<span>部位なし</span>"}
+        ${it.teeth.length ? `<span class="teeth-tag">${esc(teethLabel(it))}</span>` : "<span>部位なし</span>"}
         ${it.shade ? `<span class="teeth-tag">シェード ${esc(it.shade)}</span>` : ""}
         <span>${it.qty}本</span>
         ${price != null ? `<span class="num">¥${price.toLocaleString()}</span>` : ""}
@@ -929,6 +1033,8 @@ function viewDetail() {
       ${stepper}
       ${actions}
     </div>
+
+    ${bflPanel(o)}
 
     <div class="section-label">技工物（${o.items.length}件）</div>
     <div class="card" style="padding-top:6px">${items}
@@ -989,6 +1095,40 @@ function viewDetail() {
   </main>`;
 }
 
+// BFLが設定する項目（納品日・担当技工士・申し送り）。BFLモードのときだけ編集できる
+function bflPanel(o) {
+  const editable = isBfl();
+  const arrived = o.status >= 3 && o.status !== 98;
+  if (!editable && !o.bflDueDate && !o.technician && !o.bflNote) return "";
+  if (editable && !arrived) {
+    return `<div class="bfl-box"><div class="bb-head">🔧 BFL設定</div>
+      <p style="font-size:12.5px;color:var(--muted);margin:0">③ BFL到着済み になると、納品日・担当技工士・申し送りを設定できます。</p></div>`;
+  }
+  if (!editable) {
+    return `<div class="bfl-box"><div class="bb-head">🔧 BFLからの情報</div>
+      <dl class="kv">
+        <dt>納品予定日</dt><dd class="num">${o.bflDueDate ? `<b>${fmtJP(o.bflDueDate)}</b>` : "未設定"}</dd>
+        <dt>担当技工士</dt><dd>${esc(o.technician || "未割当")}</dd>
+      </dl>
+      ${o.bflNote ? `<div style="margin-top:10px"><div style="font-size:11px;color:var(--muted)">BFL→Dr セット時の確認事項</div>
+        <div style="font-size:13.5px;white-space:pre-wrap;margin-top:3px">${esc(o.bflNote)}</div></div>` : ""}
+    </div>`;
+  }
+  return `<div class="bfl-box"><div class="bb-head">🔧 BFL設定</div>
+    <div class="row2">
+      <div class="field" style="margin-bottom:10px"><label>納品日（出し日）</label>
+        <input type="date" id="b-due" value="${esc(o.bflDueDate || "")}"></div>
+      <div class="field" style="margin-bottom:10px"><label>担当技工士</label>
+        <select id="b-tech"><option value="">未割当</option>
+          ${TECHNICIANS.map(t => `<option ${o.technician === t ? "selected" : ""}>${esc(t)}</option>`).join("")}
+        </select></div>
+    </div>
+    <div class="field" style="margin-bottom:0"><label>BFL→Dr　セット時の確認事項</label>
+      <textarea id="b-note" placeholder="コンタクトを強めにしてあります／咬合の調整をお願いします など">${esc(o.bflNote || "")}</textarea></div>
+    ${o.chargeable ? `<p style="font-size:12px;color:var(--warn);margin-top:8px">⚠️ 作成済みのため課金発生としてチェック済みです</p>` : ""}
+  </div>`;
+}
+
 // ---------- 描画: 技工指示書 / 保証書（印刷でそのままPDF保存できる帳票） ----------
 function docTop(title) {
   return `<div class="top no-print">
@@ -999,12 +1139,21 @@ function docTop(title) {
   </div>`;
 }
 // 紙の指示書と同じ十字の歯式表記（選択歯を反転表示）
-function docTeethChart(teeth) {
+// teethTypes は { 歯: 種別 }。印刷（白黒）でも区別できるよう記号を数字の上に出す
+function docTeethChart(teeth, types) {
   const set = new Set(teeth);
-  const cell = (q, n) => `<span class="dtc ${set.has(q + n) ? "on" : ""}">${n}</span>`;
+  const ty = t => (types && types[t]) || "unit";
+  const cell = (q, n) => {
+    const t = q + n, on = set.has(t);
+    const sym = on ? TT[ty(t)].sym : "";
+    return `<span class="dtc ${on ? "on d-" + ty(t) : ""}">${sym ? `<i class="dsym">${sym}</i>` : ""}${n}</span>`;
+  };
   const row = (q1, q2) =>
     `<div class="dtc-row">${[8,7,6,5,4,3,2,1].map(n => cell(q1, n)).join("")}<span class="dtc-mid"></span>${[1,2,3,4,5,6,7,8].map(n => cell(q2, n)).join("")}</div>`;
-  return `<div class="dtc-wrap">${row("右上", "左上")}${row("右下", "左下")}</div>`;
+  const used = [...new Set(teeth.map(ty))].filter(x => TT[x].sym);
+  const legend = used.length
+    ? `<div class="dtc-legend">${used.map(x => `${TT[x].sym} ${TT[x].label}`).join("　")}</div>` : "";
+  return `<div class="dtc-wrap">${row("右上", "左上")}${row("右下", "左下")}${legend}</div>`;
 }
 function viewSheet() {
   const o = findOrder(state.orderNo);
@@ -1018,7 +1167,7 @@ function viewSheet() {
       <td class="num" style="text-align:right">${it.qty}</td>
       <td class="num" style="text-align:right">${base != null ? "¥" + base.toLocaleString() : "—"}</td>
     </tr>
-    <tr><td colspan="4" style="padding:8px 6px">${it.teeth.length ? docTeethChart(it.teeth) : '<span style="color:#888;font-size:11px">部位指定なし</span>'}</td></tr>`;
+    <tr><td colspan="4" style="padding:8px 6px">${it.teeth.length ? docTeethChart(it.teeth, it.teethType) : '<span style="color:#888;font-size:11px">部位指定なし</span>'}</td></tr>`;
   }).join("");
   const t = orderTotals(o);
   return `${docTop("技工指示書")}
@@ -1041,8 +1190,20 @@ function viewSheet() {
         <tr><td colspan="3" style="text-align:right">特急加算（+${RUSH_RATE * 100}%）</td><td class="num" style="text-align:right">¥${t.rush.toLocaleString()}</td></tr>` : ""}
         <tr><td colspan="3" style="text-align:right;font-weight:600">合計</td><td class="num" style="text-align:right;font-weight:700">¥${t.total.toLocaleString()}</td></tr>
       </table>
+      ${o.items.filter(isImplantItem).map(it => {
+        const v = it.implant || {};
+        return `<div style="font-size:11px;color:#555;margin-bottom:2px">【インプラント】${esc(PRO[it.prosId].name)}</div>
+        <table style="margin-bottom:10px">
+          <tr><th>① メーカー</th><td>${esc(implantValue(v, "maker") || "—")}</td></tr>
+          <tr><th>② 種類</th><td>${esc(implantValue(v, "kind") || "—")}</td></tr>
+          <tr><th>③ 径</th><td>${esc(implantValue(v, "dia") ? implantValue(v, "dia") + " mm" : "—")}</td></tr>
+          <tr><th>備考</th><td>${esc(v.note || "")}</td></tr>
+        </table>`;
+      }).join("")}
       <div style="font-size:11px;color:#555;margin-bottom:2px">《 設計・指示事項 》</div>
       <div class="note-box">${esc(o.note || "")}</div>
+      ${o.bflNote ? `<div style="font-size:11px;color:#555;margin:8px 0 2px">《 BFL→Dr　セット時の確認事項 》</div>
+        <div class="note-box">${esc(o.bflNote)}</div>` : ""}
       <table style="margin-top:4px">
         <tr><th style="width:7em">Drチェック</th>
           <td>${o.drChecked
@@ -1072,6 +1233,7 @@ function viewWarranty() {
   const sigItems = o.items.filter(it => PRO[it.prosId]?.sig);
   const proNames = sigItems.map(it => `${PRO[it.prosId].name}（${it.qty}本）`).join("、") || "—";
   const teethAll = sortTeeth(sigItems.flatMap(it => it.teeth));
+  const teethAllType = Object.assign({}, ...sigItems.map(it => it.teethType || {}));
   return `${docTop("保証書")}
   <main>
     <div class="doc warranty">
@@ -1091,7 +1253,7 @@ function viewWarranty() {
       <table>
         <tr><th>カルテNo</th><td class="num">${esc(o.karte)}</td><th>患者名</th><td>${esc(o.patient)}</td></tr>
         <tr><th>補綴物種類</th><td colspan="3">${esc(proNames)}</td></tr>
-        <tr><th>部位</th><td colspan="3">${teethAll.length ? docTeethChart(teethAll) : "—"}</td></tr>
+        <tr><th>部位</th><td colspan="3">${teethAll.length ? docTeethChart(teethAll, teethAllType) : "—"}</td></tr>
         <tr><th>担当医</th><td>${esc(o.doctor)}</td><th>保証開始日<br><small>（人工歯 装着日）</small></th><td class="num">${o.warrantyStart ? fmtJPFull(o.warrantyStart) : "セット完了時に確定"}</td></tr>
         <tr><th>保証終了日</th><td class="num">${o.warrantyEnd ? `<b>${fmtJPFull(o.warrantyEnd)}</b>` : "—"}</td><th>備考欄</th><td></td></tr>
       </table>
@@ -1132,6 +1294,34 @@ function viewWarranty() {
     <p class="no-print" style="font-size:11px;color:var(--muted);margin-top:8px">本番接続後は、署名済み保証書PDF（表・裏）が患者フォルダ（Drive）へ自動保存されます。印刷してのお渡し・データでのお渡しどちらも可能です。</p>
   </main>`;
 }
+// 要再送・製作中止の理由を選ぶ画面（BFL希望7・質問②）。
+// どちらも「作成済みのため課金発生」をBFL側でチェックできる
+let reasonDraft = { reason: "", comment: "", chargeable: false };
+function reasonModalHTML(kind) {
+  const isResend = kind === "resend";
+  const reasons = isResend ? RESEND_REASONS : CANCEL_REASONS;
+  const d = reasonDraft;
+  return `<div class="modal-bg" data-modal="close"><div class="modal" style="max-height:84vh;overflow-y:auto">
+    <h3>${isResend ? "⚠️ 要再送にする" : "🚫 製作中止にする"}</h3>
+    <p>${esc(ST[isResend ? 99 : 98].desc)}</p>
+    <div class="field"><label>理由を選んでください</label>
+      <div class="shade-chips">${reasons.map(r =>
+        `<button type="button" class="${d.reason === r ? "on" : ""}" data-act="reason-pick" data-kind="${kind}" data-val="${esc(r)}">${esc(r)}</button>`).join("")}</div>
+    </div>
+    ${d.reason === "その他" ? `<div class="field"><label>理由を入力</label>
+      <textarea id="f-reason-comment" placeholder="具体的な理由">${esc(d.comment)}</textarea></div>` : ""}
+    <label class="check" style="border:1.5px solid ${d.chargeable ? "var(--warn)" : "var(--line)"};border-radius:10px;padding:10px 12px">
+      <input type="checkbox" data-act="reason-charge" data-kind="${kind}" ${d.chargeable ? "checked" : ""}>
+      <span><b>作成済みのため課金が発生する</b><br><span style="font-size:12px;color:var(--muted)">チェックすると請求対象として残ります（BFL側で判断）</span></span>
+    </label>
+    <div class="btns" style="margin-top:12px">
+      <button class="btn ghost" data-modal="close">やめる</button>
+      <button class="btn primary" data-act="reason-ok" data-kind="${kind}" style="background:var(--danger);color:#fff" ${d.reason ? "" : "disabled"}>
+        ${isResend ? "要再送にする" : "製作中止にする"}</button>
+    </div>
+  </div></div>`;
+}
+
 // 印刷／PDF保存。端末によっては印刷ダイアログが出ないことがあるため、
 // 失敗しても無反応にならないよう必ず案内を出す（スタッフから「押しても進めない」との指摘に対応）
 function printDoc() {
@@ -1246,20 +1436,30 @@ const ROWS_LOWER = [
   ["右下4","右下3","右下2","右下1","左下1","左下2","左下3","左下4"],
   ["右下8","右下7","右下6","右下5","左下5","左下6","左下7","左下8"],
 ];
-function odontogram(idx, teeth) {
+function odontogram(idx, it) {
+  const teeth = it.teeth;
   const set = new Set(teeth);
-  const cell = t => `<button type="button" class="tooth ${set.has(t) ? "sel" : ""}" data-tooth="${esc(t)}" data-item="${idx}" aria-pressed="${set.has(t)}" aria-label="${esc(t)}">${t.slice(2)}</button>`;
+  const active = it.paintType || "unit";
+  const cell = t => {
+    const on = set.has(t);
+    const ty = toothType(it, t);
+    return `<button type="button" class="tooth ${on ? "sel tt-" + ty : ""}" data-tooth="${esc(t)}" data-item="${idx}"
+      aria-pressed="${on}" aria-label="${esc(t)}${on && TT[ty].sym ? " " + TT[ty].label : ""}">${t.slice(2)}${on && TT[ty].sym ? `<i class="tsym">${TT[ty].sym}</i>` : ""}</button>`;
+  };
   const grid = row => `<div class="odn-grid">${row.map(cell).join("")}</div>`;
+  const modes = `<div class="tt-modes">${TOOTH_TYPES.map(tt =>
+    `<button type="button" class="${active === tt.id ? "on" : ""} m-${tt.id}" data-paint="${tt.id}" data-item="${idx}">${tt.sym ? tt.sym + " " : ""}${tt.label}</button>`).join("")}</div>`;
   const readout = sortTeeth(teeth).map(t =>
-    `<span class="rt">${esc(t)}<button type="button" data-rm-tooth="${esc(t)}" data-item="${idx}" aria-label="${esc(t)}を外す">×</button></span>`).join("");
+    `<span class="rt tt-${toothType(it, t)}">${esc(t)}${toothSym(it, t)}<button type="button" data-rm-tooth="${esc(t)}" data-item="${idx}" aria-label="${esc(t)}を外す">×</button></span>`).join("");
   return `<div class="odn" data-odn="${idx}">
+    ${modes}
     <div class="odn-lbl"><span>右上</span><span>左上</span></div>
     <div class="odn-arch">${grid(ROWS_UPPER[0])}${grid(ROWS_UPPER[1])}</div>
     <div class="odn-arch">${grid(ROWS_LOWER[0])}${grid(ROWS_LOWER[1])}</div>
     <div class="odn-lbl bottom"><span>右下</span><span>左下</span></div>
-    <div class="odn-readout">${readout || '<span style="font-size:12px;color:var(--muted)">タップまたは横になぞって選択</span>'}
+    <div class="odn-readout">${readout || '<span style="font-size:12px;color:var(--muted)">上で種別を選んでから歯をタップ</span>'}
       ${teeth.length ? `<button type="button" class="odn-clear" data-clear-teeth="${idx}">クリア</button>` : ""}</div>
-    <div class="odn-hint">ブリッジなど連続歯は横になぞると一気に選べます（上下スクロールはそのまま使えます）</div>
+    <div class="odn-hint">種別を選んでからタップ／横になぞると連続歯を一気に指定できます（上下スクロールはそのまま使えます）</div>
   </div>`;
 }
 
@@ -1272,6 +1472,31 @@ function newDraft() {
     items: [{ prosId: null, cat: null, teeth: [], shade: "", qty: 1, photoInDrive: false }],
   };
 }
+// インプラント専用の指定欄（BFL希望3: 設計・指示事項に書かれず不明なことが多いため独立させる）
+function implantFields(i, it) {
+  const v = it.implant || {};
+  const sel = (key, label, opts) => `<div class="field" style="margin-bottom:8px"><label>${label}</label>
+    <select data-imp="${key}" data-item="${i}">
+      <option value="">選択してください</option>
+      ${opts.map(o => `<option ${v[key] === o ? "selected" : ""}>${esc(o)}</option>`).join("")}
+    </select>
+    ${v[key] === "その他" ? `<input type="text" style="margin-top:6px" placeholder="${label}を入力" data-impfree="${key}" data-item="${i}" value="${esc(v[key + "Free"] || "")}">` : ""}
+  </div>`;
+  return `<div class="implant-box">
+    <div class="ib-head">【インプラント】</div>
+    ${sel("maker", "① メーカー", IMPLANT_MAKERS)}
+    ${sel("kind", "② 種類", IMPLANT_KINDS)}
+    ${sel("dia", "③ 径（mm）", IMPLANT_DIAMETERS)}
+    <div class="field" style="margin-bottom:0"><label>備考</label>
+      <input type="text" placeholder="連結・アバットメント指定など" data-impnote="${i}" value="${esc(v.note || "")}"></div>
+  </div>`;
+}
+function implantValue(v, key) {
+  if (!v || !v[key]) return "";
+  return v[key] === "その他" ? (v[key + "Free"] || "その他") : v[key];
+}
+function hasImplantSpec(o) { return o.items.some(it => isImplantItem(it) && it.implant); }
+
 // 金額表示（特急ONなら本体＋20%の内訳を出す）
 function amountLabel(o, it) {
   const b = itemBase(o, it);
@@ -1304,7 +1529,7 @@ function viewNew() {
       <div class="field"><label>補綴カテゴリ</label>${cats}</div>
       ${prods}
       ${p ? `
-        ${needTeeth || it.teeth.length ? `<div class="field"><label>部位（歯式）</label>${odontogram(i, it.teeth)}</div>`
+        ${needTeeth || it.teeth.length ? `<div class="field"><label>部位（歯式）</label>${odontogram(i, it)}</div>`
           : `<button type="button" style="font-size:12.5px;color:var(--accent);font-weight:700;margin-bottom:10px" data-show-teeth="${i}">＋ 部位を指定する</button>`}
         <div class="field"><label>シェード</label>
           <div class="shade-chips">${SHADES.map(sh =>
@@ -1316,8 +1541,10 @@ function viewNew() {
           <div class="field" style="margin-bottom:0"><label>金額${d.rush ? "（特急込み）" : ""}</label>
             <div style="padding:10px 2px;font-weight:700" class="num" data-amount="${i}">${amountLabel(d, it)}</div></div>
         </div>
-        <div class="due-preview">納期 <b class="num">${fmtJP(dd)}</b>
+        ${isImplantItem(it) ? implantFields(i, it) : ""}
+        <div class="due-preview">納期の目安 <b class="num">${fmtJP(dd)}</b>
           <span class="src">${esc(nakaSrcLabel(p, d.clinic))}</span></div>
+        <p style="font-size:11px;color:var(--muted);margin-top:4px">※ 確定の納品日はBFLが設定します</p>
         ${p.note ? `<div style="font-size:11.5px;color:var(--muted);margin-top:6px">※ ${esc(p.note)}</div>` : ""}
       ` : ""}
     </div>`;
@@ -1477,8 +1704,10 @@ function render() {
 
 // ---------- イベント ----------
 document.addEventListener("click", (e) => {
-  const el = e.target.closest("[data-nav],[data-clinic],[data-filter],[data-open],[data-act],[data-status-to],[data-draft-clinic],[data-cat],[data-shade],[data-rm-item],[data-rm-tooth],[data-clear-teeth],[data-show-teeth],[data-modal],[data-tooth],[data-doc],[data-fb-rate]");
+  const el = e.target.closest("[data-nav],[data-clinic],[data-filter],[data-open],[data-act],[data-status-to],[data-draft-clinic],[data-cat],[data-shade],[data-rm-item],[data-rm-tooth],[data-clear-teeth],[data-show-teeth],[data-modal],[data-tooth],[data-doc],[data-fb-rate],[data-paint],[data-role]");
   if (!el) return;
+
+  if (el.dataset.role) { state.role = el.dataset.role; render(); return; }
 
   if (el.dataset.doc) { state.view = el.dataset.doc; render(); return; }
 
@@ -1493,13 +1722,25 @@ document.addEventListener("click", (e) => {
     return;
   }
 
+  if (el.dataset.paint) {
+    const it = draft && draft.items[Number(el.dataset.item)];
+    if (it) { it.paintType = el.dataset.paint; render(); }
+    return;
+  }
+
   if (el.dataset.tooth) {
     // キーボード操作（Enter/Space → e.detail===0）のみここで処理。ポインタはpointerdown側で処理済み
     if (e.detail === 0 && draft) {
       const it = draft.items[Number(el.dataset.item)];
       if (it) {
-        const t = el.dataset.tooth;
-        it.teeth = it.teeth.includes(t) ? it.teeth.filter(x => x !== t) : [...it.teeth, t];
+        const t = el.dataset.tooth, type = it.paintType || "unit";
+        if (it.teeth.includes(t) && toothType(it, t) === type) {
+          it.teeth = it.teeth.filter(x => x !== t);
+          if (it.teethType) delete it.teethType[t];
+        } else {
+          if (!it.teeth.includes(t)) it.teeth.push(t);
+          it.teethType = it.teethType || {}; it.teethType[t] = type;
+        }
         syncQty(it); render();
       }
     }
@@ -1599,13 +1840,21 @@ document.addEventListener("click", (e) => {
       showToast(`${ST[cur].short} → ${ST[o.status].short} に戻しました`);
       break;
     }
-    case "resend": {
-      state.modal = `<div class="modal-bg" data-modal="close"><div class="modal">
-        <h3>⚠️ 要再送にしますか？</h3><p>${esc(ST[99].desc)}</p>
-        <div class="btns"><button class="btn ghost" data-modal="close">やめる</button>
-        <button class="btn primary" data-modal="resend-yes" style="background:var(--danger);color:#fff">要再送にする</button></div>
-      </div></div>`;
-      render(); break;
+    case "resend": reasonDraft = { reason: "", comment: "", chargeable: false }; state.modal = reasonModalHTML("resend"); render(); break;
+    case "cancel-order": reasonDraft = { reason: "", comment: "", chargeable: false }; state.modal = reasonModalHTML("cancel"); render(); break;
+    case "reason-pick": reasonDraft.reason = el.dataset.val; state.modal = reasonModalHTML(el.dataset.kind); render(); break;
+    case "reason-charge": reasonDraft.chargeable = !reasonDraft.chargeable; state.modal = reasonModalHTML(el.dataset.kind); render(); break;
+    case "reason-ok": {
+      const o = findOrder(state.orderNo); if (!o) return;
+      const kind = el.dataset.kind;
+      const label = reasonDraft.reason === "その他" ? (reasonDraft.comment || "その他") : reasonDraft.reason;
+      const note = `理由: ${label}${reasonDraft.chargeable ? "／作成済みのため課金発生" : "／課金なし"}`;
+      o.chargeable = reasonDraft.chargeable;
+      if (kind === "resend") { o.resendReason = label; applyStatus(o, 99, note); }
+      else { o.cancelReason = label; applyStatus(o, 98, note); }
+      state.modal = null;
+      showToast(`${ST[kind === "resend" ? 99 : 98].name} にしました`, () => { undoLast(o, "元に戻す"); render(); });
+      break;
     }
     case "toast-undo": {
       const fn = state.toast?.undoFn; state.toast = null; state.modal = null;
@@ -1622,12 +1871,7 @@ document.addEventListener("click", (e) => {
   }
 
   if (el.dataset.modal) {
-    if (el.dataset.modal === "resend-yes") {
-      const o = findOrder(state.orderNo);
-      state.modal = null;
-      if (o) { applyStatus(o, 99, "医院へ再送を依頼"); showToast("⚠️ 要再送 にしました", () => { undoLast(o, "元に戻す"); render(); }); }
-      else render();
-    } else if (el.dataset.modal === "close") {
+    if (el.dataset.modal === "close") {
       // 背景は背景自体をタップしたときのみ閉じる（モーダル内の誤タップで閉じない）
       if (!el.classList.contains("modal-bg") || e.target === el) { state.modal = null; render(); }
     }
@@ -1643,8 +1887,14 @@ function toothApply(cell) {
   if (idx !== painting.item) return;
   const it = draft.items[idx];
   const has = it.teeth.includes(tooth);
-  if (painting.mode && !has) { it.teeth.push(tooth); cell.classList.add("sel"); cell.setAttribute("aria-pressed","true"); }
-  if (!painting.mode && has) { it.teeth = it.teeth.filter(t => t !== tooth); cell.classList.remove("sel"); cell.setAttribute("aria-pressed","false"); }
+  if (painting.mode) {
+    if (!has) it.teeth.push(tooth);
+    it.teethType = it.teethType || {};
+    it.teethType[tooth] = painting.type;
+  } else if (has) {
+    it.teeth = it.teeth.filter(t => t !== tooth);
+    if (it.teethType) delete it.teethType[tooth];
+  }
 }
 document.addEventListener("pointerdown", (e) => {
   const cell = e.target.closest(".tooth");
@@ -1652,8 +1902,13 @@ document.addEventListener("pointerdown", (e) => {
   const idx = Number(cell.dataset.item);
   const it = draft.items[idx];
   if (!it) return;
-  painting = { item: idx, mode: !it.teeth.includes(cell.dataset.tooth), snapshot: [...it.teeth] };
+  const tooth = cell.dataset.tooth;
+  const type = it.paintType || "unit";
+  // 同じ種別で既に指定済みの歯をタップしたら解除。別種別なら種別を付け替える
+  const sameType = it.teeth.includes(tooth) && toothType(it, tooth) === type;
+  painting = { item: idx, type, mode: !sameType, snapshot: [...it.teeth], snapshotType: { ...(it.teethType || {}) } };
   toothApply(cell);
+  render();
 });
 document.addEventListener("pointermove", (e) => {
   if (!painting) return;
@@ -1670,7 +1925,7 @@ document.addEventListener("pointerup", () => {
 document.addEventListener("pointercancel", () => {
   if (!painting) return;
   const it = draft && draft.items[painting.item];
-  if (it) it.teeth = painting.snapshot;
+  if (it) { it.teeth = painting.snapshot; it.teethType = painting.snapshotType; }
   painting = null;
   render();
 });
@@ -1690,6 +1945,18 @@ document.addEventListener("input", (e) => {
     return;
   }
   if (t.id === "f-fb-comment" && fbDraft) { fbDraft.comment = t.value; return; }
+  if (t.id === "f-reason-comment") { reasonDraft.comment = t.value; return; }
+  if (t.id === "b-note") { const o = findOrder(state.orderNo); if (o) { o.bflNote = t.value; save(); } return; }
+  if (t.dataset.impfree != null) {
+    const it = draft.items[Number(t.dataset.item)];
+    if (it) { it.implant = it.implant || {}; it.implant[t.dataset.impfree + "Free"] = t.value; }
+    return;
+  }
+  if (t.dataset.impnote != null) {
+    const it = draft.items[Number(t.dataset.impnote)];
+    if (it) { it.implant = it.implant || {}; it.implant.note = t.value; }
+    return;
+  }
   if (t.id === "noki-search") {
     // 入力欄を作り直さず表だけ差し替える（IME・カーソル位置を壊さない）
     state.nokiSearch = t.value;
@@ -1713,8 +1980,21 @@ document.addEventListener("input", (e) => {
 document.addEventListener("change", (e) => {
   const t = e.target;
   if (t.id === "noki-ship") { state.nokiShip = t.value || todayISO(); render(); return; }
+  if (t.id === "sort-by") { state.sortBy = t.value; render(); return; }
+  if (t.id === "tech-filter") { state.techFilter = t.value; render(); return; }
   if (t.dataset && t.dataset.fbPhoto != null && fbDraft) { fbDraft.photoInDrive = t.checked; return; }
+  // BFL設定（納品日・担当技工士）
+  if (t.id === "b-due" || t.id === "b-tech") {
+    const o = findOrder(state.orderNo);
+    if (o) { if (t.id === "b-due") o.bflDueDate = t.value; else o.technician = t.value; save(); render(); }
+    return;
+  }
   if (!draft) return;
+  if (t.dataset.imp != null) {
+    const it = draft.items[Number(t.dataset.item)];
+    if (it) { it.implant = it.implant || {}; it.implant[t.dataset.imp] = t.value; render(); }
+    return;
+  }
   switch (t.id) {
     case "f-doctor": draft.doctor = t.value; return;
     case "f-imp": draft.impressionDate = t.value; render(); return;
@@ -1756,7 +2036,8 @@ function saveOrder() {
   const no = `${dateKey}-${String(seq).padStart(4, "0")}`;
   db.orders.unshift({
     no, clinic: d.clinic, doctor: d.doctor, karte: d.karte.trim(), patient: d.patient.trim(),
-    items: d.items.map(it => ({ prosId: it.prosId, teeth: sortTeeth(it.teeth), shade: it.shade, qty: it.qty, photoInDrive: it.photoInDrive })),
+    items: d.items.map(it => ({ prosId: it.prosId, teeth: sortTeeth(it.teeth), teethType: { ...(it.teethType || {}) },
+      shade: it.shade, qty: it.qty, photoInDrive: it.photoInDrive, implant: it.implant ? { ...it.implant } : null })),
     note: d.note.trim(), impressionDate: d.impressionDate, shipDate: d.shipDate,
     apptDate: d.apptDate, rush: d.rush,
     drChecked: d.drChecked, drCheckedBy: d.drChecked ? d.doctor : "", drCheckedAt: d.drChecked ? todayISO() : "",

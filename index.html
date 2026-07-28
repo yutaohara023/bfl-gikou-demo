@@ -3,6 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F5E73">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="技工物">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='38' fill='%230F5E73'/%3E%3Ctext x='90' y='124' font-size='96' text-anchor='middle'%3E%F0%9F%A6%B7%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='52' font-size='52'%3E%F0%9F%A6%B7%3C/text%3E%3C/svg%3E">
 <title>BFL技工物 — 発注・進捗（デモ）</title>
 <style>
 :root{
@@ -386,7 +392,7 @@ const SHADES = ["A1","A2","A3","A3.5","A4","B1","B2","B3","B4","C1","C2","C3","C
 
 // ---------- BFL側のマスタ ----------
 // 担当技工士（BFLの技工士3名。星野綾子さんは事務のため技工士の割当先には出さない）
-const TECHNICIANS = ["牧口正博", "太田沙耶", "黒田萌友"];
+const TECHNICIANS = ["牧口正博", "太田紗椰", "黒田萌友"];
 // 要再送の理由（BFL希望7）
 const RESEND_REASONS = ["印象不良（変形）", "マージン出ていない", "バイト合っていない", "その他"];
 // 製作中止の理由（BFL質問②）
@@ -518,8 +524,20 @@ const NOKI_PDFS = {
   ],
 };
 const DRIVE_FOLDER = "#demo-no-link";
-// シェード写真（一眼）の保存先フォルダ。本番接続時に医院ごとのフォルダIDを設定する
-const SHADE_PHOTO_FOLDERS = { "丸の内": "", "浦安": "", "国東": "" };
+// KDC-GWS（Google Workspace）のDriveへアプリから直接飛べるようにする
+const DRIVE_LINKS = [
+  { label: "納期表など（BFL共有フォルダ）", url: DRIVE_FOLDER, icon: "📁" },
+  { label: "BFL納期表", url: "#demo-no-link", icon: "📄" },
+  { label: "BFL料金表", url: "#demo-no-link", icon: "💴" },
+  { label: "BFL技工指示書（紙様式）", url: "#demo-no-link", icon: "📋" },
+  { label: "BFL保証書", url: "#demo-no-link", icon: "📜" },
+  { label: "BFLパンフレット", url: "#demo-no-link", icon: "📗" },
+  { label: "技工物DB（スプレッドシート）", url: "https://docs.google.com/spreadsheets/d/1dZooNVHvv8sSSEX3WxnJgvYHGeJChZy6P7epV3jE0N8/edit", icon: "📊" },
+  { label: "マイドライブ", url: "#demo-no-link", icon: "🗂" },
+  { label: "共有ドライブ", url: "#demo-no-link", icon: "🏢" },
+];
+// カルテ番号や患者名でDrive内を検索する（患者フォルダに直接飛ぶ）
+const driveSearch = q => `#demo-no-link"丸の内": "", "浦安": "", "国東": "" };
 
 // 納期表の中X日は医院×月ごとにPDFが発行される。現状は丸の内8月版(0717ver)を転記済み。
 // 他院の値は本番で各院のPDFから取り込む（未転記の間は丸の内版を参考値として表示）
@@ -606,7 +624,7 @@ function seedOrders() {
       note: "セメントはいつも通りで。", drChecked: true, drCheckedBy: "Dr B", drCheckedAt: "2026-07-22",
       impressionDate: "2026-07-22", shipDate: "2026-07-22",
       apptDate: "2026-08-07", status: 3, dates: { bflArrival: "2026-07-24" },
-      bflDueDate: "2026-08-06", technician: "太田沙耶", bflNote: "コンタクトを強めにしてあります。調整をお願いします。",
+      bflDueDate: "2026-08-06", technician: "太田紗椰", bflNote: "コンタクトを強めにしてあります。調整をお願いします。",
       history: [
         { at: "2026-07-22 18:02", from: 0, to: 1, by: "丸の内" },
         { at: "2026-07-24 09:15", from: 1, to: 3, by: "BFL" },
@@ -666,7 +684,7 @@ function seedOrders() {
       note: "", impressionDate: "2026-07-01", shipDate: "2026-07-01",
       apptDate: "2026-07-18", status: 6,
       dates: { bflArrival: "2026-07-02", bflShip: "2026-07-15", delivered: "2026-07-16", setDone: "2026-07-18" },
-      bflDueDate: "2026-07-16", technician: "太田沙耶",
+      bflDueDate: "2026-07-16", technician: "太田紗椰",
       warrantyStart: "2026-07-18", warrantyEnd: "2031-07-17",
       history: [
         { at: "2026-07-01 12:00", from: 0, to: 1, by: "丸の内" },
@@ -714,6 +732,7 @@ const state = {
   orderNo: null,
   nokiShip: todayISO(),
   nokiSearch: "",
+  driveQ: "",
   role: "clinic",        // clinic | bfl（BFL専用項目を編集できるかの切替。本番はログインのロールで自動判定）
   sortBy: "due",         // due | tech
   techFilter: "all",
@@ -867,6 +886,7 @@ const IC = {
   search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
   back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
   ext: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>',
+  drive: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M8.5 3h7l5.5 9.5-3.5 6h-11l-3.5-6z"/><path d="M8.5 3 3 12.5h7"/><path d="M15.5 3 10 12.5l3.5 6"/></svg>',
   help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.2 2.4c-.6.2-1 .8-1 1.4v.4"/><path d="M12 17h.01"/></svg>',
 };
 
@@ -1115,8 +1135,13 @@ function viewDetail() {
         ? `<a class="linkline" href="${esc(SHADE_PHOTO_FOLDERS[o.clinic])}" target="_blank" rel="noopener">📷 シェード写真フォルダ（Drive）<span class="arrow">${IC.ext}</span></a>`
         : `<div class="linkline" style="color:var(--muted)">📷 シェード写真フォルダ — 本番接続時に医院ごとのDriveフォルダを設定します</div>`}
     </div>
+    <div class="section-label">Google ドライブ</div>
+    <div class="card" style="padding-top:2px;padding-bottom:2px">
+      <a class="linkline" href="${esc(driveSearch(o.karte))}" target="_blank" rel="noopener">🔍 この患者のフォルダを開く（${esc(o.karte)}）<span class="arrow">${IC.ext}</span></a>
+      <a class="linkline" href="${esc(driveSearch(o.no))}" target="_blank" rel="noopener">🔍 この発注の書類を探す（${esc(o.no)}）<span class="arrow">${IC.ext}</span></a>
+      <a class="linkline" href="${DRIVE_FOLDER}" target="_blank" rel="noopener">📁 BFL共有フォルダ<span class="arrow">${IC.ext}</span></a>
+    </div>
     <div class="card" style="font-size:12px;color:var(--muted)">
-      <b style="color:var(--ink)">📁 書類の保管場所</b><br>
       指示書・保証書のPDFは、本番接続後は Google Drive の
       <b style="color:var(--ink)">患者フォルダ「${esc(o.karte)}_${esc(o.patient)}」</b>に自動保存されます。
       保証の問い合わせ・シェード・納期・Drコメントを後から確認したいときは、この画面か患者フォルダを見れば揃います。
@@ -1725,6 +1750,32 @@ function viewNoki() {
   </main>`;
 }
 
+// ---------- 描画: Google ドライブ（牧口さん希望: アプリからKDC-GWSのDriveへ直接飛べるように） ----------
+function viewDrive() {
+  return `
+  <div class="top">
+    <div class="top-row"><div class="brand">ドライブ<small>KDC-GWS Google Drive</small></div></div>
+  </div>
+  <main>
+    <div class="section-label">患者フォルダを探す</div>
+    <div class="card">
+      <div class="field" style="margin-bottom:8px"><label>カルテ番号・患者名で検索</label>
+        <input type="search" id="drive-q" placeholder="例: M01234 / サトウ" value="${esc(state.driveQ)}"></div>
+      <a class="btn primary" style="display:block;text-decoration:none;line-height:1.6"
+         href="${esc(driveSearch(state.driveQ || ""))}" target="_blank" rel="noopener">🔍 Driveで検索して開く</a>
+      <p style="font-size:11px;color:var(--muted);margin-top:8px">検索結果からその患者のフォルダ（カルテ番号_患者名）を開けます。</p>
+    </div>
+
+    <div class="section-label">よく使うフォルダ</div>
+    <div class="card" style="padding-top:2px;padding-bottom:2px">
+      ${DRIVE_LINKS.map(l => `<a class="linkline" href="${esc(l.url)}" target="_blank" rel="noopener">${l.icon} ${esc(l.label)}<span class="arrow">${IC.ext}</span></a>`).join("")}
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:10px">
+      KDC-GWSのアカウントでログインしている端末なら、そのままDriveアプリ／ブラウザで開きます。
+    </p>
+  </main>`;
+}
+
 // ---------- 描画: 全体 ----------
 function nav() {
   const t = (v) => state.view === v ? "on" : "";
@@ -1732,6 +1783,7 @@ function nav() {
     <button class="${t("home")}" data-nav="home">${IC.list}一覧</button>
     <button class="${t("new")}" data-nav="new">${IC.plus}新規発注</button>
     <button class="${t("noki")}" data-nav="noki">${IC.cal}納期表</button>
+    <button class="${t("drive")}" data-nav="drive">${IC.drive}ドライブ</button>
   </nav>`;
 }
 function render() {
@@ -1743,6 +1795,7 @@ function render() {
   else if (state.view === "noki") html = viewNoki();
   else if (state.view === "sheet") html = viewSheet();
   else if (state.view === "warranty") html = viewWarranty();
+  else if (state.view === "drive") html = viewDrive();
   html += nav();
   if (state.toast) {
     html += `<div class="toast" role="status"><span>${esc(state.toast.msg)}</span>
@@ -2018,6 +2071,12 @@ document.addEventListener("input", (e) => {
   if (t.dataset.impnote != null) {
     const it = draft.items[Number(t.dataset.impnote)];
     if (it) { it.implant = it.implant || {}; it.implant.note = t.value; }
+    return;
+  }
+  if (t.id === "drive-q") {
+    state.driveQ = t.value;
+    const btn = document.querySelector('a.btn.primary[href^="#demo-no-link"]');
+    if (btn) btn.href = driveSearch(t.value);
     return;
   }
   if (t.id === "noki-search") {

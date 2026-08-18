@@ -2219,12 +2219,18 @@ function saveOrder() {
 const GAS = (typeof google !== "undefined" && google.script && google.script.run) ? google.script.run : null;
 const LIVE = !!GAS;
 
-// サーバー関数を呼ぶ。失敗したら黙って落とさずトーストで知らせる
+// アプリの合言葉（端末ごとに初回1回入力し、この端末に保存される）
+const KEY_LS = "bfl-app-key";
+let APP_KEY = "";
+try { APP_KEY = localStorage.getItem(KEY_LS) || ""; } catch (e) { /* 保存不可でも動く */ }
+
+// サーバー関数を呼ぶ。失敗したら黙って落とさずトーストで知らせる。
+// 「開発者として実行」方式のため、全呼び出しの第1引数に合言葉を載せる。
 function callServer(fn, args, onOk) {
   if (!LIVE) { if (onOk) onOk(null); return; }
   GAS.withSuccessHandler(r => { if (onOk) onOk(r); })
      .withFailureHandler(err => showToast("保存できませんでした: " + ((err && err.message) || err)))
-     [fn].apply(null, args || []);
+     [fn].apply(null, [APP_KEY].concat(args || []));
 }
 
 // サーバーのステータス名 ⇄ アプリ内のステータスID
@@ -2361,18 +2367,42 @@ function pushBflFields(o) {
 function pushFeedback(o) { if (LIVE) callServer("saveFeedback", [o.no, o.feedback]); }
 function pushSignature(o) { if (LIVE) callServer("saveSignature", [o.no, o.signature]); }
 
+/** 合言葉の入力画面。正しい合言葉が入るまでデータには触れない */
+function renderKeyGate(msg) {
+  document.getElementById("app").innerHTML =
+    '<div style="max-width:340px;margin:70px auto 0;padding:0 20px;text-align:center">' +
+    '<div style="font-size:42px">🔑</div>' +
+    '<h2 style="margin:10px 0 6px;font-size:18px;color:var(--ink)">合言葉を入力してください</h2>' +
+    '<p style="font-size:13px;color:var(--muted);margin:0 0 16px">この端末での初回のみ必要です。院内・BFLで共有している合言葉を入力してください。</p>' +
+    (msg ? '<p style="font-size:13px;color:var(--danger);margin:0 0 10px">' + msg + '</p>' : '') +
+    '<input id="key-in" type="text" autocomplete="off" autocapitalize="none" ' +
+    'style="width:100%;box-sizing:border-box;padding:13px;font-size:16px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)">' +
+    '<button id="key-go" style="margin-top:12px;width:100%;padding:14px;font-size:15px;font-weight:700;border:none;border-radius:10px;background:var(--accent);color:var(--accent-ink)">はじめる</button>' +
+    '</div>';
+  const go = () => {
+    APP_KEY = document.getElementById("key-in").value.trim();
+    try { localStorage.setItem(KEY_LS, APP_KEY); } catch (e) { /* 保存不可でも今回分は動く */ }
+    boot();
+  };
+  document.getElementById("key-go").onclick = go;
+  document.getElementById("key-in").onkeydown = e => { if (e.key === "Enter") go(); };
+}
+
 /** 起動。本番ならサーバーからデータを取ってから描画する */
 function boot() {
   if (!LIVE) { render(); return; }
   document.getElementById("app").innerHTML =
     '<div style="padding:60px 20px;text-align:center;color:var(--muted)">読み込み中…</div>';
-  GAS.withSuccessHandler(d => { applyBootstrap(d); render(); })
+  GAS.withSuccessHandler(d => {
+       if (d && d.needKey) { renderKeyGate(APP_KEY ? "合言葉が違います" : ""); return; }
+       applyBootstrap(d); render();
+     })
      .withFailureHandler(err => {
        document.getElementById("app").innerHTML =
          '<div style="padding:40px 20px;text-align:center"><p>データを読み込めませんでした。</p>' +
          '<p style="font-size:12px;color:var(--muted)">' + ((err && err.message) || err) + '</p></div>';
      })
-     .bootstrap();
+     .bootstrap(APP_KEY);
 }
 
 // ---------- 起動 ----------

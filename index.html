@@ -72,6 +72,8 @@ input,select,textarea{font:inherit;color:var(--ink)}
 
 /* ---------- header ---------- */
 .top{position:sticky;top:0;z-index:20;background:var(--ground);border-bottom:1px solid var(--line)}
+/* GAS配信時はブラウザのURLバーが上端に重なって戻るボタンが押せないことがあるため下げる */
+html.live .top{padding-top:16px}
 .top-row{display:flex;align-items:center;gap:10px;padding:12px 16px 8px}
 .brand{font-weight:700;font-size:17px;letter-spacing:.02em}
 .brand small{display:block;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
@@ -573,6 +575,18 @@ const DRIVE_LINKS = [
 ];
 // カルテ番号や患者名でDrive内を検索する（患者フォルダに直接飛ぶ）
 const driveSearch = q => `#demo-no-link${encodeURIComponent(q)}`;
+
+/** 案件詳細の患者フォルダリンク。本番ではサーバーがフォルダを特定して直リンクにする */
+function patientFolderLink(o) {
+  if (o.patientFolderUrl) {
+    return `<a class="linkline" href="${esc(o.patientFolderUrl)}" target="_blank" rel="noopener">📂 患者フォルダを開く（${esc(o.karte)}）<span class="arrow">${IC.ext}</span></a>`;
+  }
+  if (LIVE && !o._folderDone) {
+    ensureFolderLink(o);
+    return `<div class="linkline" style="color:var(--muted)">📂 患者フォルダを探しています…</div>`;
+  }
+  return `<a class="linkline" href="${esc(driveSearch(o.karte))}" target="_blank" rel="noopener">🔍 Driveで患者フォルダを検索（${esc(o.karte)}）<span class="arrow">${IC.ext}</span></a>`;
+}
 // シェード写真（一眼）の保存先フォルダ。本番接続時に医院ごとのフォルダIDを設定する
 const SHADE_PHOTO_FOLDERS = { "丸の内": "", "浦安": "", "国東": "" };
 
@@ -1175,13 +1189,11 @@ function viewDetail() {
     </div>
     <div class="section-label">Google ドライブ</div>
     <div class="card" style="padding-top:2px;padding-bottom:2px">
-      <a class="linkline" href="${esc(driveSearch(o.karte))}" target="_blank" rel="noopener">🔍 この患者のフォルダを開く（${esc(o.karte)}）<span class="arrow">${IC.ext}</span></a>
-      <a class="linkline" href="${esc(driveSearch(o.no))}" target="_blank" rel="noopener">🔍 この発注の書類を探す（${esc(o.no)}）<span class="arrow">${IC.ext}</span></a>
+      ${patientFolderLink(o)}
       <a class="linkline" href="${DRIVE_FOLDER}" target="_blank" rel="noopener">📁 BFL共有フォルダ<span class="arrow">${IC.ext}</span></a>
     </div>
     <div class="card" style="font-size:12px;color:var(--muted)">
-      指示書・保証書のPDFは、本番接続後は Google Drive の
-      <b style="color:var(--ink)">患者フォルダ「${esc(o.karte)}_${esc(o.patient)}」</b>に自動保存されます。
+      指示書・保証書のPDFは Google Drive の<b style="color:var(--ink)">患者フォルダ</b>に自動保存されます。
       保証の問い合わせ・シェード・納期・Drコメントを後から確認したいときは、この画面か患者フォルダを見れば揃います。
     </div>
 
@@ -1317,7 +1329,8 @@ function viewSheet() {
       <button class="btn ghost" style="flex:0 0 auto;padding:12px 14px" data-act="print-help" aria-label="保存方法">？</button>
       <button class="btn primary" data-act="print-doc">🖨 印刷 / PDF保存</button>
     </div>
-    <p class="no-print" style="font-size:11px;color:var(--muted)">本番接続後は、発注と同時にこのPDFが患者フォルダ（Drive）へ自動保存され、BFL側でも同じものが見られます。</p>
+    <button class="btn ghost no-print" data-act="go-detail" style="width:100%;margin-bottom:10px">← 案件に戻る</button>
+    <p class="no-print" style="font-size:11px;color:var(--muted)">発注と同時にこのPDFが患者フォルダ（Drive）へ自動保存され、BFL側でも同じものが見られます。</p>
   </main>`;
 }
 // Driveの「BFL保証書（審美歯科治療5年保証書）」の文面・構成に準拠
@@ -1385,8 +1398,9 @@ function viewWarranty() {
       <button class="btn ghost" style="flex:0 0 auto;padding:12px 14px" data-act="print-help" aria-label="保存方法">？</button>
       <button class="btn primary" data-act="print-doc">🖨 印刷 / PDF保存</button>
     </div>
+    <button class="btn ghost no-print" data-act="go-detail" style="width:100%;margin-bottom:10px">← 案件に戻る</button>
     <a class="linkline no-print" href="${WARRANTY_TERMS_PDF}" target="_blank" rel="noopener" style="padding-left:2px">📄 保証規約（裏面）PDF（デモ・リンク無効）<span class="arrow">${IC.ext}</span></a>
-    <p class="no-print" style="font-size:11px;color:var(--muted);margin-top:8px">本番接続後は、署名済み保証書PDF（表・裏）が患者フォルダ（Drive）へ自動保存されます。印刷してのお渡し・データでのお渡しどちらも可能です。</p>
+    <p class="no-print" style="font-size:11px;color:var(--muted);margin-top:8px">セット完了・署名すると、署名入り保証書PDFが患者フォルダ（Drive）へ自動保存されます。印刷してのお渡し・データでのお渡しどちらも可能です。</p>
   </main>`;
 }
 // 要再送・製作中止の理由を選ぶ画面（BFL希望7・質問②）。
@@ -2247,6 +2261,7 @@ function saveOrder() {
 // ===================================================================
 const GAS = (typeof google !== "undefined" && google.script && google.script.run) ? google.script.run : null;
 const LIVE = !!GAS;
+if (LIVE) document.documentElement.classList.add("live");
 
 // アプリの合言葉（端末ごとに初回1回入力し、この端末に保存される）
 const KEY_LS = "bfl-app-key";
@@ -2395,6 +2410,17 @@ function pushBflFields(o) {
 }
 function pushFeedback(o) { if (LIVE) callServer("saveFeedback", [o.no, o.feedback]); }
 function pushSignature(o) { if (LIVE) callServer("saveSignature", [o.no, o.signature]); }
+
+/** 患者フォルダの直リンクをサーバーから取得する（1案件につき1回だけ） */
+function ensureFolderLink(o) {
+  if (!LIVE || o._folderReq) return;
+  o._folderReq = true;
+  callServer("getPatientFolder", [o.no], res => {
+    o.patientFolderUrl = (res && res.url) || "";
+    o._folderDone = true;
+    if (state.view === "detail" && state.orderNo === o.no) render();
+  });
+}
 
 /** 合言葉の入力画面。正しい合言葉が入るまでデータには触れない */
 function renderKeyGate(msg) {

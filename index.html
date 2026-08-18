@@ -325,11 +325,11 @@ a.linkline:visited{color:var(--ink)}
 ===================================================================== */
 
 // ---------- マスタ ----------
-const CLINICS = ["丸の内", "浦安", "国東"];
-const CLINIC_FULL = { "丸の内": "栗林歯科医院・丸の内", "浦安": "栗林歯科医院・浦安", "国東": "栗林歯科医院・国東" };
+let CLINICS = ["丸の内", "浦安", "国東"];
+let CLINIC_FULL = { "丸の内": "栗林歯科医院・丸の内", "浦安": "栗林歯科医院・浦安", "国東": "栗林歯科医院・国東" };
 
 // 担当者マスタ（スプレッドシートの名簿を医院ごとに転記）
-const STAFF = {
+let STAFF = {
   "丸の内": [
     "Dr佐藤健一", "Dr高橋直樹", "Dr伊藤麻衣", "Dr渡辺翔太",
     "DH竹内あかね", "DH和田七海", "DH中島美穂",
@@ -364,7 +364,7 @@ function staffGroups(clinic) {
   return groups;
 }
 
-const STATUSES = [
+let STATUSES = [
   { id: 0,  name: "⓪ 医院から発送前",         short: "発送前",   color: "#F5F5F5", side: "医院", flow: 0,
     desc: "発注を登録した直後の状態。まだ医院から何も送っていません。" },
   { id: 1,  name: "① スキャン送信済み",       short: "スキャン済", color: "#E3F2FD", side: "医院", flow: 1,
@@ -384,15 +384,15 @@ const STATUSES = [
   { id: 98, name: "🚫 製作中止",              short: "中止",     color: "#E0E0E0", side: "—", flow: -1,
     desc: "患者都合・治療方針の変更などで製作を取りやめた状態です。一覧からは外れますが記録は残るため、あとから理由や課金の有無を確認できます。" },
 ];
-const ST = Object.fromEntries(STATUSES.map(s => [s.id, s]));
+let ST = Object.fromEntries(STATUSES.map(s => [s.id, s]));
 // ステータス到達時に自動スタンプする日付フィールド
 const STAMP_FIELD = { 3: "bflArrival", 4: "bflShip", 5: "delivered", 6: "setDone" };
 
-const SHADES = ["A1","A2","A3","A3.5","A4","B1","B2","B3","B4","C1","C2","C3","C4","D2","D3","D4","写真あり","前回と同じ"];
+let SHADES = ["A1","A2","A3","A3.5","A4","B1","B2","B3","B4","C1","C2","C3","C4","D2","D3","D4","写真あり","前回と同じ"];
 
 // ---------- BFL側のマスタ ----------
 // 担当技工士（BFLの技工士3名。事務のスタッフは技工士の割当先には出さない）
-const TECHNICIANS = ["斉藤修平", "望月拓也", "篠原美樹"];
+let TECHNICIANS = ["斉藤修平", "望月拓也", "篠原美樹"];
 // 要再送の理由（BFL希望7）
 const RESEND_REASONS = ["印象不良（変形）", "マージン出ていない", "バイト合っていない", "その他"];
 // 製作中止の理由（BFL質問②）
@@ -430,7 +430,7 @@ function diaInfo(maker, v) { return implantSystem(maker).dia.find(d => d.v === v
 // 補綴物マスタ（既存DBの品目 + BFL納期表の「中X日」）
 // naka: 納期表の中X日（営業日）/ cal: 暦日計算（印象日からX日）/ price: 技工料金
 // est=true は納期表に掲載がなく既存マスタの日数を目安として使う品目
-const PROSTHETICS = [
+let PROSTHETICS = [
   { id: 1,  cat: "基本補綴",   name: "Fコア",                    naka: 6,  price: 5000,  sig: false },
   { id: 2,  cat: "プロビ",     name: "プロビ（1〜2本）",          naka: 6,  price: 3000,  sig: false },
   { id: 3,  cat: "プロビ",     name: "プロビ（3〜5本）",          naka: 8,  price: null,  sig: false },
@@ -493,11 +493,11 @@ const PROSTHETICS = [
   { id: 59, cat: "その他",     name: "レジンアップ",              naka: 5,  price: 1800,  sig: false, est: true },
   { id: 60, cat: "その他",     name: "イレギュラー",              naka: null, price: null, sig: false, note: "納期はBFLと相談" },
 ];
-const CATEGORIES = [...new Set(PROSTHETICS.map(p => p.cat))];
-const PRO = Object.fromEntries(PROSTHETICS.map(p => [p.id, p]));
+let CATEGORIES = [...new Set(PROSTHETICS.map(p => p.cat))];
+let PRO = Object.fromEntries(PROSTHETICS.map(p => [p.id, p]));
 
 // BFL休業日（デモ用の概算カレンダー。本番は納期表マスタ／BFLカレンダーから取得）
-const LAB_CLOSED = new Set([
+let LAB_CLOSED = new Set([
   "2026-07-20",                                               // 海の日
   "2026-08-10","2026-08-11","2026-08-12","2026-08-13","2026-08-14", // 盆休み
   "2026-09-21","2026-09-22","2026-09-23",                     // 敬老の日・秋分
@@ -743,6 +743,7 @@ const state = {
 const isBfl = () => state.role === "bfl";
 let draft = null;        // 新規発注フォームの下書き
 let toastTimer = null;
+let bflNoteTimer = null;
 
 // ---------- 共通ヘルパ ----------
 const $ = sel => document.querySelector(sel);
@@ -1005,7 +1006,7 @@ function viewHome() {
   </div>
   <main>
     <div id="home-list">${homeCardsHTML(orders)}</div>
-    <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:18px">
+    <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:18px" ${LIVE ? 'hidden' : ''}>
       プロトタイプ（モックデータ・患者名は架空）<br>
       <button data-act="reset-demo" style="color:var(--accent);font-weight:700">デモデータを初期状態に戻す</button>
       <br><span style="font-size:10px">※ このボタンはデモ専用です。この端末のブラウザ内の練習データだけを戻します（スプレッドシートには影響しません）</span>
@@ -1878,6 +1879,7 @@ document.addEventListener("click", (e) => {
     const o = findOrder(state.orderNo); if (!o) return;
     const to = Number(el.dataset.statusTo);
     applyStatus(o, to);
+    pushStatus(o, to);
     // セット完了時はフィードバック入力 →（保証対象なら）署名パッドの順に開く
     if (to === 6) openFeedback(o);
     showToast(`${ST[to].name} に更新しました`, () => { undoLast(o, "元に戻す"); render(); });
@@ -1936,6 +1938,7 @@ document.addEventListener("click", (e) => {
       const o = findOrder(state.orderNo); if (!o) return;
       o.feedback = { ...fbDraft, at: o.feedback?.at || todayISO() };
       save();
+      pushFeedback(o);
       maybeOpenSig(o);
       render();
       showToast("フィードバックを保存しました");
@@ -1944,7 +1947,7 @@ document.addEventListener("click", (e) => {
     case "sig-save": {
       const c = $("#sig-pad");
       const o = findOrder(state.orderNo);
-      if (c && o) { o.signature = c.toDataURL("image/png"); o.signedAt = todayISO(); save(); }
+      if (c && o) { o.signature = c.toDataURL("image/png"); o.signedAt = todayISO(); save(); pushSignature(o); }
       state.modal = null; render();
       showToast("署名を保存しました。保証書から印刷・PDF保存できます");
       break;
@@ -1955,6 +1958,7 @@ document.addEventListener("click", (e) => {
       const o = findOrder(state.orderNo); if (!o || !o.undoStack.length) return;
       const cur = o.status;
       undoLast(o);
+      pushStatus(o, o.status, { note: `${ST[cur].short} → ${ST[o.status].short} に戻す` });
       showToast(`${ST[cur].short} → ${ST[o.status].short} に戻しました`);
       break;
     }
@@ -1970,6 +1974,7 @@ document.addEventListener("click", (e) => {
       o.chargeable = reasonDraft.chargeable;
       if (kind === "resend") { o.resendReason = label; applyStatus(o, 99, note); }
       else { o.cancelReason = label; applyStatus(o, 98, note); }
+      pushStatus(o, o.status, { reason: label, chargeable: reasonDraft.chargeable, note: note });
       state.modal = null;
       showToast(`${ST[kind === "resend" ? 99 : 98].name} にしました`, () => { undoLast(o, "元に戻す"); render(); });
       break;
@@ -2064,7 +2069,15 @@ document.addEventListener("input", (e) => {
   }
   if (t.id === "f-fb-comment" && fbDraft) { fbDraft.comment = t.value; return; }
   if (t.id === "f-reason-comment") { reasonDraft.comment = t.value; return; }
-  if (t.id === "b-note") { const o = findOrder(state.orderNo); if (o) { o.bflNote = t.value; save(); } return; }
+  if (t.id === "b-note") {
+    const o = findOrder(state.orderNo);
+    if (o) {
+      o.bflNote = t.value; save();
+      clearTimeout(bflNoteTimer);
+      bflNoteTimer = setTimeout(() => pushBflFields(o), 800);  // 打ち終わってから送る
+    }
+    return;
+  }
   if (t.dataset.impfree != null) {
     const it = draft.items[Number(t.dataset.item)];
     if (it) { it.implant = it.implant || {}; it.implant[t.dataset.impfree + "Free"] = t.value; }
@@ -2110,7 +2123,7 @@ document.addEventListener("change", (e) => {
   // BFL設定（納品日・担当技工士）
   if (t.id === "b-due" || t.id === "b-tech") {
     const o = findOrder(state.orderNo);
-    if (o) { if (t.id === "b-due") o.bflDueDate = t.value; else o.technician = t.value; save(); render(); }
+    if (o) { if (t.id === "b-due") o.bflDueDate = t.value; else o.technician = t.value; save(); pushBflFields(o); render(); }
     return;
   }
   if (!draft) return;
@@ -2174,14 +2187,179 @@ function saveOrder() {
     status: 0, dates: {}, history: [], undoStack: [],
   });
   save();
+  pushNewOrder(db.orders[0]);
   draft = null;
   state.view = "detail"; state.orderNo = no; state.clinic = d.clinic; state.filter = "all";
   render();
   showToast(`発注 ${no} を登録しました（${ST[0].short}）`);
 }
 
+
+// ===================================================================
+//  本番接続（Google Apps Script Web App から配信された場合のみ有効）
+//  同じHTMLをデモ（モックデータ）でも本番でも使う。google.script があれば本番。
+// ===================================================================
+const GAS = (typeof google !== "undefined" && google.script && google.script.run) ? google.script.run : null;
+const LIVE = !!GAS;
+
+// サーバー関数を呼ぶ。失敗したら黙って落とさずトーストで知らせる
+function callServer(fn, args, onOk) {
+  if (!LIVE) { if (onOk) onOk(null); return; }
+  GAS.withSuccessHandler(r => { if (onOk) onOk(r); })
+     .withFailureHandler(err => showToast("保存できませんでした: " + ((err && err.message) || err)))
+     [fn].apply(null, args || []);
+}
+
+// サーバーのステータス名 ⇄ アプリ内のステータスID
+function statusIdByName(name) {
+  const hit = STATUSES.find(s => s.name === String(name).trim());
+  if (hit) return hit.id;
+  console.warn("未知のステータス名:", name);
+  return 0;
+}
+function prosIdByName(name) {
+  const hit = PROSTHETICS.find(p => p.name === name || p.dbName === name);
+  return hit ? hit.id : null;
+}
+
+/** bootstrap() の結果をアプリのマスタ・案件に反映する */
+function applyBootstrap(d) {
+  if (!d) return;
+
+  // ステータスはアプリ側のID（0〜6・98・99）で進行を分岐しているのでIDは置き換えない。
+  // シートからは色と担当だけを名称一致で取り込む（シートのIDは1始まりで体系が違う）。
+  if (d.statuses && d.statuses.length) {
+    const byName = Object.fromEntries(d.statuses.map(x => [x.name, x]));
+    STATUSES.forEach(sv => {
+      const r = byName[sv.name];
+      if (!r) return;
+      if (r.color) sv.color = r.color;
+      if (r.side) sv.side = r.side;
+    });
+    ST = Object.fromEntries(STATUSES.map(sv => [sv.id, sv]));
+  }
+
+  // 医院
+  if (d.clinics && d.clinics.length) {
+    const kdc = d.clinics.filter(c => c.org === "栗林歯科医院");
+    if (kdc.length) {
+      CLINICS = kdc.map(c => c.name.replace("栗林歯科医院・", ""));
+      CLINIC_FULL = Object.fromEntries(kdc.map(c => [c.name.replace("栗林歯科医院・", ""), c.name]));
+      if (!CLINICS.includes(state.clinic)) state.clinic = CLINICS[0];
+    }
+  }
+
+  // 担当者: 医院ごとの名簿と、BFLの技工士
+  if (d.staff && d.staff.length) {
+    const byClinic = {};
+    d.staff.forEach(m => {
+      if (m.org === "BFL" || !m.clinic) return;
+      const key = m.clinic.replace("栗林歯科医院・", "");
+      (byClinic[key] = byClinic[key] || []).push(m.name);
+    });
+    if (Object.keys(byClinic).length) STAFF = byClinic;
+    const techs = d.staff.filter(m => m.org === "BFL" && m.role === "BFL技工士" && m.name !== "BFL")
+      .map(m => m.name);
+    if (techs.length) TECHNICIANS = [...new Set(techs)];
+  }
+
+  // 補綴物: 名称・料金・署名要否はシートを正とし、納期表の中X日など
+  // シートに無い情報はアプリ側の表から引き継ぐ
+  if (d.prosthetics && d.prosthetics.length) {
+    const local = Object.fromEntries(PROSTHETICS.map(p => [p.id, p]));
+    PROSTHETICS = d.prosthetics.map(p => {
+      const l = local[p.id] || {};
+      return {
+        id: p.id, cat: p.cat, name: l.name || p.name, dbName: p.name,
+        naka: l.naka != null ? l.naka : (p.mode === "WORKDAY" ? p.days : null),
+        cal: l.cal != null ? l.cal : (p.mode !== "WORKDAY" ? p.days : undefined),
+        price: p.price, kunisaki: l.kunisaki, sig: p.sig,
+        noTeeth: l.noTeeth, est: l.est, note: l.note, alias: l.alias,
+      };
+    });
+    CATEGORIES = [...new Set(PROSTHETICS.map(p => p.cat))];
+    PRO = Object.fromEntries(PROSTHETICS.map(p => [p.id, p]));
+  }
+
+  if (d.shades && d.shades.length) SHADES = d.shades;
+  if (d.closed && d.closed.length) LAB_CLOSED = new Set(d.closed);
+
+  // ログインした人のロールで医院／BFLを決める（切替は本番でも手動で変えられる）
+  if (d.me && d.me.role) state.role = d.me.role;
+  state.me = d.me || null;
+
+  db = { seedVersion: SEED_VERSION, orders: (d.orders || []).map(fromServerOrder) };
+  db.orders.forEach(migrate);
+}
+
+/** サーバーの1件をアプリ内の形に変換する */
+function fromServerOrder(o) {
+  return {
+    no: o.no, clinic: o.clinic, doctor: o.doctor, karte: o.karte, patient: o.patient,
+    items: (o.items || []).map(it => ({
+      prosId: prosIdByName(it.prosName), teeth: it.teeth || [], teethType: it.teethType || {},
+      shade: it.shade, qty: it.qty || 1, photoInDrive: !!it.photoInDrive,
+      implant: it.implant || null,
+    })),
+    note: o.note, impressionDate: o.impressionDate, shipDate: o.shipDate, apptDate: o.apptDate,
+    bflDueDate: o.bflDueDate, technician: o.technician, bflNote: o.bflNote,
+    rush: !!o.rush, drChecked: !!o.drChecked, drCheckedBy: o.drCheckedBy, drCheckedAt: o.drCheckedAt,
+    chargeable: !!o.chargeable, resendReason: o.resendReason, cancelReason: o.cancelReason,
+    status: statusIdByName(o.statusName), dates: o.dates || {},
+    warrantyStart: o.warrantyStart, warrantyEnd: o.warrantyEnd,
+    signature: o.signature, feedback: o.feedback || null,
+    history: [], undoStack: [],
+  };
+}
+
+/** 発注1件をサーバーへ登録する */
+function pushNewOrder(o) {
+  if (!LIVE) return;
+  callServer("createOrder", [{
+    clinic: o.clinic, clinicFull: CLINIC_FULL[o.clinic] || o.clinic, doctor: o.doctor,
+    karte: o.karte, patient: o.patient, note: o.note,
+    impressionDate: o.impressionDate, shipDate: o.shipDate, apptDate: o.apptDate,
+    rush: !!o.rush, drChecked: !!o.drChecked, statusName: ST[0].name,
+    items: o.items.map(it => {
+      const p = PRO[it.prosId] || {};
+      return {
+        prosName: p.dbName || p.name, cat: p.cat, teeth: it.teeth, teethType: it.teethType || {},
+        shade: it.shade, qty: it.qty, unit: unitPrice(o.clinic, p), implant: it.implant || null,
+      };
+    }),
+  }], res => { if (res && res.no) { o.no = res.no; render(); } });
+}
+
+/** ステータス変更をサーバーへ反映する */
+function pushStatus(o, to, opts) {
+  if (!LIVE) return;
+  callServer("changeStatus", [o.no, ST[to].name, Object.assign({
+    warranty: o.items.some(it => PRO[it.prosId] && PRO[it.prosId].sig),
+  }, opts || {})]);
+}
+function pushBflFields(o) {
+  if (!LIVE) return;
+  callServer("setBflFields", [o.no, { bflDueDate: o.bflDueDate || "", technician: o.technician || "", bflNote: o.bflNote || "" }]);
+}
+function pushFeedback(o) { if (LIVE) callServer("saveFeedback", [o.no, o.feedback]); }
+function pushSignature(o) { if (LIVE) callServer("saveSignature", [o.no, o.signature]); }
+
+/** 起動。本番ならサーバーからデータを取ってから描画する */
+function boot() {
+  if (!LIVE) { render(); return; }
+  document.getElementById("app").innerHTML =
+    '<div style="padding:60px 20px;text-align:center;color:var(--muted)">読み込み中…</div>';
+  GAS.withSuccessHandler(d => { applyBootstrap(d); render(); })
+     .withFailureHandler(err => {
+       document.getElementById("app").innerHTML =
+         '<div style="padding:40px 20px;text-align:center"><p>データを読み込めませんでした。</p>' +
+         '<p style="font-size:12px;color:var(--muted)">' + ((err && err.message) || err) + '</p></div>';
+     })
+     .bootstrap();
+}
+
 // ---------- 起動 ----------
-render();
+boot();
 </script>
 </body>
 </html>

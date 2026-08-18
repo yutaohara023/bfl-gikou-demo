@@ -319,7 +319,22 @@ a.linkline:visited{color:var(--ink)}
 </style>
 </head>
 <body>
-<div class="shell" id="app"></div>
+<div class="shell" id="app">
+  <div id="boot-diag" style="padding:70px 24px;text-align:center;color:#6E7B85;font-size:14px;line-height:1.8">
+    読み込み準備中… <span style="font-size:11px">(v5)</span><br>
+    <span style="font-size:12px">この表示のまま変わらない場合は、この画面を撮って送ってください</span>
+  </div>
+</div>
+<script>
+/* アプリ本体のJSが起動できない場合に、原因を画面に出す（真っ白対策の診断） */
+window.onerror = function (msg, src, line, col) {
+  var el = document.getElementById("boot-diag");
+  if (el) el.innerHTML = '<span style="color:#B3402F">⚠️ 起動エラー</span><br>' +
+    '<span style="font-size:12px;word-break:break-all">' + msg + '（行 ' + line + '）</span><br>' +
+    '<span style="font-size:12px">この画面を撮って送ってください</span>';
+  return false;
+};
+</script>
 <script>
 "use strict";
 /* =====================================================================

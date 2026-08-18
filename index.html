@@ -227,6 +227,10 @@ a.linkline:visited{color:var(--ink)}
 .implant-box{border:1.5px solid color-mix(in srgb,var(--warn) 45%,var(--line));border-radius:10px;padding:11px 12px;margin-bottom:12px;background:color-mix(in srgb,var(--warn) 6%,var(--surface))}
 .implant-box .ib-head{font-weight:700;font-size:12.5px;color:var(--warn);letter-spacing:.06em;margin-bottom:8px}
 /* 径はメーカーのカラーコードで選ぶ（アストラテック EV: 3.0緑 3.6紫 4.2黄 4.8青 5.4茶） */
+.qty-row{display:flex;gap:6px;align-items:stretch}
+.qty-row button{flex:0 0 46px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:20px;font-weight:700;color:var(--accent)}
+.qty-row input{flex:1;min-width:0;text-align:center}
+.qty-row button:active{background:var(--surface2)}
 .dia-chips{display:flex;flex-wrap:wrap;gap:6px}
 .dia-chips button{display:flex;align-items:center;gap:5px;padding:7px 11px;border-radius:9px;border:1.5px solid var(--line);background:var(--surface);font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
 .dia-chips button .dia-dot{width:13px;height:13px;border-radius:50%;background:var(--dia,var(--muted));border:1px solid rgba(0,0,0,.15)}
@@ -492,6 +496,8 @@ let PROSTHETICS = [
   { id: 58, cat: "その他",     name: "模型製作／3Dプリンター",    naka: 5,  price: 3000,  sig: false, noTeeth: true, est: true },
   { id: 59, cat: "その他",     name: "レジンアップ",              naka: 5,  price: 1800,  sig: false, est: true },
   { id: 60, cat: "その他",     name: "イレギュラー",              naka: null, price: null, sig: false, note: "納期はBFLと相談" },
+  // 加算品目（単体では納期を持たない。×個数で請求する）
+  { id: 61, cat: "その他",     name: "連結",                      naka: null, price: null, sig: false, noTeeth: true, addon: true, note: "ブリッジ等の連結部の加算。個数分を×で指定" },
 ];
 let CATEGORIES = [...new Set(PROSTHETICS.map(p => p.cat))];
 let PRO = Object.fromEntries(PROSTHETICS.map(p => [p.id, p]));
@@ -961,7 +967,7 @@ function homeCardsHTML(orders) {
       </div>
       <div class="oc-items">${o.items.map(it => {
         const p = PRO[it.prosId];
-        return `<div class="oc-item"><span>${esc(p ? p.name : "?")}</span>${it.teeth.length ? `<span class="teeth-tag">${esc(teethLabel(it))}</span>` : ""}${it.shade ? `<span class="teeth-tag">${esc(it.shade)}</span>` : ""}</div>`;
+        return `<div class="oc-item"><span>${esc(p ? p.name : "?")}</span>${it.teeth.length ? `<span class="teeth-tag">${esc(teethLabel(it))}</span>` : ""}${it.shade ? `<span class="teeth-tag">${esc(it.shade)}</span>` : ""}${(it.qty || 1) > 1 ? `<span class="teeth-tag">×${it.qty}</span>` : ""}</div>`;
       }).join("")}</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${statusPill(o.status)}
         ${o.rush ? '<span class="badge rush">⚡ 特急</span>' : ""}
@@ -1618,7 +1624,12 @@ function viewNew() {
         </div>
         <label class="check"><input type="checkbox" data-photo="${i}" ${it.photoInDrive ? "checked" : ""}>シェード写真はDriveにあり（一眼撮影）</label>
         <div class="row2" style="margin-top:8px">
-          <div class="field" style="margin-bottom:0"><label>本数</label><input type="number" min="1" inputmode="numeric" value="${it.qty}" data-qty="${i}"></div>
+          <div class="field" style="margin-bottom:0"><label>本数（×個数）</label>
+            <div class="qty-row">
+              <button type="button" data-qty-step="-1" data-item="${i}" aria-label="減らす">−</button>
+              <input type="number" min="1" inputmode="numeric" value="${it.qty}" data-qty="${i}">
+              <button type="button" data-qty-step="1" data-item="${i}" aria-label="増やす">＋</button>
+            </div></div>
           <div class="field" style="margin-bottom:0"><label>金額${d.rush ? "（特急込み）" : ""}</label>
             <div style="padding:10px 2px;font-weight:700" class="num" data-amount="${i}">${amountLabel(d, it)}</div></div>
         </div>
@@ -1813,7 +1824,7 @@ function render() {
 
 // ---------- イベント ----------
 document.addEventListener("click", (e) => {
-  const el = e.target.closest("[data-nav],[data-clinic],[data-filter],[data-open],[data-act],[data-status-to],[data-draft-clinic],[data-cat],[data-shade],[data-rm-item],[data-rm-tooth],[data-clear-teeth],[data-show-teeth],[data-modal],[data-tooth],[data-doc],[data-fb-rate],[data-paint],[data-role],[data-imp-dia]");
+  const el = e.target.closest("[data-nav],[data-clinic],[data-filter],[data-open],[data-act],[data-status-to],[data-draft-clinic],[data-cat],[data-shade],[data-rm-item],[data-rm-tooth],[data-clear-teeth],[data-show-teeth],[data-modal],[data-tooth],[data-doc],[data-fb-rate],[data-paint],[data-role],[data-imp-dia],[data-qty-step]");
   if (!el) return;
 
   if (el.dataset.role) { state.role = el.dataset.role; render(); return; }
@@ -1828,6 +1839,12 @@ document.addEventListener("click", (e) => {
       state.modal = feedbackModalHTML();
       render();
     }
+    return;
+  }
+
+  if (el.dataset.qtyStep) {
+    const it = draft && draft.items[Number(el.dataset.item)];
+    if (it) { it.qty = Math.max(1, (it.qty || 1) + Number(el.dataset.qtyStep)); render(); }
     return;
   }
 

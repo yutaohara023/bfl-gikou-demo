@@ -331,23 +331,23 @@ const CLINIC_FULL = { "丸の内": "栗林歯科医院・丸の内", "浦安": "
 // 担当者マスタ（スプレッドシートの名簿を医院ごとに転記）
 const STAFF = {
   "丸の内": [
-    "Dr A", "Dr B", "Dr C", "Dr D",
-    "DH A", "DH B", "DH C",
-    "DA A", "DA B", "RD A",
+    "Dr佐藤健一", "Dr高橋直樹", "Dr伊藤麻衣", "Dr渡辺翔太",
+    "DH竹内あかね", "DH和田七海", "DH中島美穂",
+    "DA小島遥", "DA平野琴音", "RD遠藤直美",
   ],
   "浦安": [
-    "Dr A", "Dr B", "Dr E", "Dr F", "Dr G",
-    "Dr H", "Dr I", "Dr J", "Dr K", "Dr L",
-    "Dr M", "Dr N", "Dr O", "Dr P", "Dr Q",
-    "Dr R", "Dr S",
-    "DH D", "DH B", "DH C", "DH E", "DH F",
-    "DH G", "DH H", "DH I",
-    "DA C", "DA D", "DA E", "DA F", "DA G",
-    "DA H", "DA I", "DA J", "DA K", "DA L",
-    "RD B", "RD C",
+    "Dr佐藤健一", "Dr高橋直樹", "Dr小林悠人", "Dr加藤梨花", "Dr吉田拓海",
+    "Dr松本結衣", "Dr井上大輔", "Dr木村彩香", "Dr池田涼介", "Dr橋本奈々",
+    "Dr阿部隼人", "Dr前田美咲", "Dr藤田航平", "Dr岡田真央", "Dr長谷川蓮",
+    "Dr村上千尋", "Dr近藤陽介",
+    "DH藤井香織", "DH和田七海", "DH中島美穂", "DH三浦沙織", "DH岡本瑞希",
+    "DH松田優子", "DH中野綾", "DH大塚成美",
+    "DA河野未来", "DA内田花音", "DA柴田楓", "DA酒井杏", "DA宮崎心春",
+    "DA横山莉子", "DA宮本詩織", "DA大西朋美", "DA須藤茜", "DA堀内美月",
+    "RD青木里奈", "RD西村柚希",
   ],
   "国東": [
-    "Dr A", "Dr T", "Dr G", "Dr D", "DA M",
+    "Dr佐藤健一", "Dr原田さくら", "Dr吉田拓海", "Dr渡辺翔太", "DA浅野汐里",
   ],
 };
 // 担当医の選択肢: 自院メンバーの下に、ヘルプで来る他院メンバーを続ける
@@ -391,8 +391,8 @@ const STAMP_FIELD = { 3: "bflArrival", 4: "bflShip", 5: "delivered", 6: "setDone
 const SHADES = ["A1","A2","A3","A3.5","A4","B1","B2","B3","B4","C1","C2","C3","C4","D2","D3","D4","写真あり","前回と同じ"];
 
 // ---------- BFL側のマスタ ----------
-// 担当技工士（BFLの技工士3名。星野綾子さんは事務のため技工士の割当先には出さない）
-const TECHNICIANS = ["牧口正博", "太田紗椰", "黒田萌友"];
+// 担当技工士（BFLの技工士3名。事務のスタッフは技工士の割当先には出さない）
+const TECHNICIANS = ["斉藤修平", "望月拓也", "篠原美樹"];
 // 要再送の理由（BFL希望7）
 const RESEND_REASONS = ["印象不良（変形）", "マージン出ていない", "バイト合っていない", "その他"];
 // 製作中止の理由（BFL質問②）
@@ -618,38 +618,38 @@ const SEED_VERSION = 7;
 function seedOrders() {
   return [
     {
-      no: "20260722-0002", clinic: "丸の内", doctor: "Dr B", karte: "M01234", patient: "サトウ ハナコ",
+      no: "20260722-0002", clinic: "丸の内", doctor: "Dr高橋直樹", karte: "M01234", patient: "サトウ ハナコ",
       items: [
         { prosId: 29, teeth: ["右上5"], shade: "A3", qty: 1, photoInDrive: true },
         { prosId: 21, teeth: ["右上6"], shade: "A3", qty: 1, photoInDrive: true },
       ],
-      note: "セメントはいつも通りで。", drChecked: true, drCheckedBy: "Dr B", drCheckedAt: "2026-07-22",
+      note: "セメントはいつも通りで。", drChecked: true, drCheckedBy: "Dr高橋直樹", drCheckedAt: "2026-07-22",
       impressionDate: "2026-07-22", shipDate: "2026-07-22",
       apptDate: "2026-08-07", status: 3, dates: { bflArrival: "2026-07-24" },
-      bflDueDate: "2026-08-06", technician: "太田紗椰", bflNote: "コンタクトを強めにしてあります。調整をお願いします。",
+      bflDueDate: "2026-08-06", technician: "望月拓也", bflNote: "コンタクトを強めにしてあります。調整をお願いします。",
       history: [
         { at: "2026-07-22 18:02", from: 0, to: 1, by: "丸の内" },
         { at: "2026-07-24 09:15", from: 1, to: 3, by: "BFL" },
       ],
     },
     {
-      no: "20260718-0001", clinic: "丸の内", doctor: "Dr C", karte: "M02001", patient: "タナカ イチロウ",
+      no: "20260718-0001", clinic: "丸の内", doctor: "Dr伊藤麻衣", karte: "M02001", patient: "タナカ イチロウ",
       items: [{ prosId: 45, teeth: ["右上1","左上1"], teethType: { "右上1": "implant", "左上1": "implant" }, shade: "写真あり", qty: 2, photoInDrive: true,
         implant: { maker: "アストラテック", kind: "オッセオスピード EV ストレート", dia: "4.2", note: "スクリュー固定でお願いします" } }],
       note: "写真はDriveのシェードフォルダに。", impressionDate: "2026-07-17", shipDate: "2026-07-18",
-      apptDate: "2026-08-05", status: 3, dates: { bflArrival: "2026-07-20" }, bflDueDate: "2026-08-11", technician: "黒田萌友",
+      apptDate: "2026-08-05", status: 3, dates: { bflArrival: "2026-07-20" }, bflDueDate: "2026-08-11", technician: "篠原美樹",
       history: [
         { at: "2026-07-18 17:40", from: 0, to: 1, by: "丸の内" },
         { at: "2026-07-20 09:05", from: 1, to: 3, by: "BFL" },
       ],
     },
     {
-      no: "20260715-0003", clinic: "丸の内", doctor: "Dr A", karte: "M01777", patient: "ヤマモト ミドリ",
+      no: "20260715-0003", clinic: "丸の内", doctor: "Dr佐藤健一", karte: "M01777", patient: "ヤマモト ミドリ",
       items: [{ prosId: 5, teeth: ["左上5","左上6","左上7"], teethType: { "左上5": "abutment", "左上6": "pontic", "左上7": "abutment" }, shade: "", qty: 3, photoInDrive: false }],
-      note: "特急でお願いします。", rush: true, drChecked: true, drCheckedBy: "Dr A", drCheckedAt: "2026-07-15",
+      note: "特急でお願いします。", rush: true, drChecked: true, drCheckedBy: "Dr佐藤健一", drCheckedAt: "2026-07-15",
       impressionDate: "2026-07-15", shipDate: "2026-07-15",
       apptDate: "2026-07-22", status: 4, dates: { bflArrival: "2026-07-16", bflShip: "2026-07-27" },
-      bflDueDate: "2026-07-28", technician: "牧口正博",
+      bflDueDate: "2026-07-28", technician: "斉藤修平",
       history: [
         { at: "2026-07-15 16:20", from: 0, to: 1, by: "丸の内" },
         { at: "2026-07-16 09:30", from: 1, to: 3, by: "BFL" },
@@ -657,11 +657,11 @@ function seedOrders() {
       ],
     },
     {
-      no: "20260714-0001", clinic: "丸の内", doctor: "Dr B", karte: "M00988", patient: "スズキ ケンタ",
+      no: "20260714-0001", clinic: "丸の内", doctor: "Dr高橋直樹", karte: "M00988", patient: "スズキ ケンタ",
       items: [{ prosId: 30, teeth: ["左下5"], shade: "A2", qty: 1, photoInDrive: false }],
       note: "", impressionDate: "2026-07-14", shipDate: "2026-07-14",
       apptDate: "2026-07-28", status: 5, dates: { bflArrival: "2026-07-15", bflShip: "2026-07-21", delivered: "2026-07-22" },
-      bflDueDate: "2026-07-22", technician: "牧口正博",
+      bflDueDate: "2026-07-22", technician: "斉藤修平",
       history: [
         { at: "2026-07-14 13:00", from: 0, to: 2, by: "丸の内" },
         { at: "2026-07-15 09:00", from: 2, to: 3, by: "BFL" },
@@ -670,7 +670,7 @@ function seedOrders() {
       ],
     },
     {
-      no: "20260710-0002", clinic: "丸の内", doctor: "Dr C", karte: "M02310", patient: "ワタナベ アヤ",
+      no: "20260710-0002", clinic: "丸の内", doctor: "Dr伊藤麻衣", karte: "M02310", patient: "ワタナベ アヤ",
       items: [{ prosId: 26, teeth: ["左上2"], shade: "A1", qty: 1, photoInDrive: false }],
       note: "印象再送になった案件。", impressionDate: "2026-07-10", shipDate: "2026-07-10",
       apptDate: "2026-08-01", status: 99, dates: { bflArrival: "2026-07-12" },
@@ -681,12 +681,12 @@ function seedOrders() {
       ],
     },
     {
-      no: "20260701-0001", clinic: "丸の内", doctor: "Dr B", karte: "M01502", patient: "コバヤシ ナオ",
+      no: "20260701-0001", clinic: "丸の内", doctor: "Dr高橋直樹", karte: "M01502", patient: "コバヤシ ナオ",
       items: [{ prosId: 28, teeth: ["右下6"], shade: "A3.5", qty: 1, photoInDrive: false }],
       note: "", impressionDate: "2026-07-01", shipDate: "2026-07-01",
       apptDate: "2026-07-18", status: 6,
       dates: { bflArrival: "2026-07-02", bflShip: "2026-07-15", delivered: "2026-07-16", setDone: "2026-07-18" },
-      bflDueDate: "2026-07-16", technician: "太田紗椰",
+      bflDueDate: "2026-07-16", technician: "望月拓也",
       warrantyStart: "2026-07-18", warrantyEnd: "2031-07-17",
       history: [
         { at: "2026-07-01 12:00", from: 0, to: 1, by: "丸の内" },
@@ -697,13 +697,13 @@ function seedOrders() {
       ],
     },
     {
-      no: "20260723-0001", clinic: "浦安", doctor: "Dr G", karte: "U00432", patient: "ナカムラ ソウタ",
+      no: "20260723-0001", clinic: "浦安", doctor: "Dr吉田拓海", karte: "U00432", patient: "ナカムラ ソウタ",
       items: [{ prosId: 10, teeth: [], shade: "", qty: 1, photoInDrive: false }],
       note: "", impressionDate: "2026-07-23", shipDate: "",
       apptDate: "2026-08-08", status: 0, dates: {}, history: [],
     },
     {
-      no: "20260724-0001", clinic: "丸の内", doctor: "Dr B", karte: "M02456", patient: "イトウ サクラ",
+      no: "20260724-0001", clinic: "丸の内", doctor: "Dr高橋直樹", karte: "M02456", patient: "イトウ サクラ",
       items: [{ prosId: 2, teeth: ["右上4"], shade: "", qty: 1, photoInDrive: false }],
       note: "", impressionDate: "2026-07-24", shipDate: "",
       apptDate: "", status: 0, dates: {}, history: [],

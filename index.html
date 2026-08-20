@@ -194,6 +194,8 @@ a.linkline:visited{color:var(--ink)}
 .odn-arch::after{content:"";position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--line);transform:translateX(-50%)}
 .odn-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
 .odn-grid+.odn-grid{margin-top:4px}
+/* 広い画面では1顎1列（紙の指示書と同じクロス表記） */
+.odn-grid.wide{grid-template-columns:repeat(16,1fr);gap:3px}
 .tooth{min-height:40px;min-width:0;border:1px solid var(--line);border-radius:7px;display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--muted);background:var(--ground);position:relative;z-index:1}
 .tooth.sel{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 /* 歯式の種別（BFL希望2）: 記号＋色の両方で区別する */
@@ -1566,6 +1568,12 @@ function odontogram(idx, it) {
       aria-pressed="${on}" aria-label="${esc(t)}${on && TT[ty].sym ? " " + TT[ty].label : ""}">${t.slice(2)}${on && TT[ty].sym ? `<i class="tsym">${TT[ty].sym}</i>` : ""}</button>`;
   };
   const grid = row => `<div class="odn-grid">${row.map(cell).join("")}</div>`;
+  // 広い画面（タブレット等）では紙の指示書と同じ1顎1列のクロス表記にする
+  const wide = window.matchMedia("(min-width: 640px)").matches;
+  const wideRow = rows => `<div class="odn-grid wide">${
+    [...rows[0].slice(0, 4), ...rows[1].slice(0, 4), ...rows[1].slice(4), ...rows[0].slice(4)].map(cell).join("")}</div>`;
+  const upper = wide ? wideRow(ROWS_UPPER) : grid(ROWS_UPPER[0]) + grid(ROWS_UPPER[1]);
+  const lower = wide ? wideRow([ROWS_LOWER[1], ROWS_LOWER[0]]) : grid(ROWS_LOWER[0]) + grid(ROWS_LOWER[1]);
   const modes = `<div class="tt-modes">${TOOTH_TYPES.map(tt =>
     `<button type="button" class="${active === tt.id ? "on" : ""} m-${tt.id}" data-paint="${tt.id}" data-item="${idx}">${tt.sym ? tt.sym + " " : ""}${tt.label}</button>`).join("")}</div>`;
   const readout = sortTeeth(teeth).map(t =>
@@ -1573,8 +1581,8 @@ function odontogram(idx, it) {
   return `<div class="odn" data-odn="${idx}">
     ${modes}
     <div class="odn-lbl"><span>右上</span><span>左上</span></div>
-    <div class="odn-arch">${grid(ROWS_UPPER[0])}${grid(ROWS_UPPER[1])}</div>
-    <div class="odn-arch">${grid(ROWS_LOWER[0])}${grid(ROWS_LOWER[1])}</div>
+    <div class="odn-arch">${upper}</div>
+    <div class="odn-arch">${lower}</div>
     <div class="odn-lbl bottom"><span>右下</span><span>左下</span></div>
     <div class="odn-readout">${readout || '<span style="font-size:12px;color:var(--muted)">上で種別を選んでから歯をタップ</span>'}
       ${teeth.length ? `<button type="button" class="odn-clear" data-clear-teeth="${idx}">クリア</button>` : ""}</div>
@@ -2575,6 +2583,8 @@ function boot() {
 }
 
 // ---------- 起動 ----------
+// 歯式チャートは画面幅で1列/2段が切り替わるため、境界をまたいだら描き直す
+window.matchMedia("(min-width: 640px)").addEventListener("change", () => render());
 boot();
 </script>
 </body>

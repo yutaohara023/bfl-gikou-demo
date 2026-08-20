@@ -781,6 +781,7 @@ const state = {
   search: "",
   searchOpen: false,
   orderNo: null,
+  confirmDel: null,      // 完全削除の2度押し確認（対象の発注番号）
   nokiShip: todayISO(),
   nokiSearch: "",
   driveQ: "",
@@ -1097,6 +1098,9 @@ function viewDetail() {
         ${(isBfl() && (o.status === 3 || o.status === 4)) ? '<button class="btn danger-ghost" data-act="resend">⚠️ 要再送にする</button>' : ""}
       </div>
       ${o.status !== 98 && o.status !== 6 ? '<button class="btn danger-ghost" data-act="cancel-order" style="width:100%">🚫 製作中止にする</button>' : ""}
+      ${o.status === 0 ? (state.confirmDel === o.no
+        ? '<button class="btn" data-act="delete-order" style="width:100%;background:var(--danger);color:#fff">⚠️ もう一度押すと完全に削除します（元に戻せません）</button>'
+        : '<button class="btn danger-ghost" data-act="delete-order" style="width:100%">🗑 この発注を完全に削除する</button>') : ""}
     </div>
     <p class="resend-note">間違えて進めても「ひとつ戻す」でいつでも戻せます。すべての変更は履歴に残ります。</p>`;
 
@@ -1933,6 +1937,7 @@ document.addEventListener("click", (e) => {
   }
 
   if (el.dataset.nav) {
+    state.confirmDel = null;
     state.view = el.dataset.nav;
     if (state.view === "new" && draft && draft.editNo) draft = null;  // 編集中の下書きを新規に持ち込まない
     if (state.view === "new" && !draft) draft = newDraft();
@@ -1940,7 +1945,7 @@ document.addEventListener("click", (e) => {
   }
   if (el.dataset.clinic) { state.clinic = el.dataset.clinic; state.filter = "all"; render(); return; }
   if (el.dataset.filter != null) { state.filter = el.dataset.filter === "all" ? "all" : Number(el.dataset.filter); render(); return; }
-  if (el.dataset.open) { state.view = "detail"; state.orderNo = el.dataset.open; render(); return; }
+  if (el.dataset.open) { state.confirmDel = null; state.view = "detail"; state.orderNo = el.dataset.open; render(); return; }
 
   if (el.dataset.statusTo != null) {
     const o = findOrder(state.orderNo); if (!o) return;
@@ -2028,6 +2033,17 @@ document.addEventListener("click", (e) => {
       pushStatus(o, o.status, { note: `${ST[cur].short} → ${ST[o.status].short} に戻す` });
       showToast(`${ST[cur].short} → ${ST[o.status].short} に戻しました`);
       break;
+    }
+    case "delete-order": {
+      const o = findOrder(state.orderNo); if (!o || o.status !== 0) return;
+      if (state.confirmDel !== o.no) { state.confirmDel = o.no; render(); return; }
+      state.confirmDel = null;
+      db.orders = db.orders.filter(x => x.no !== o.no);
+      save(); pushDeleteOrder(o);
+      state.view = "home"; state.orderNo = null;
+      render();
+      showToast(`発注 ${o.no} を完全に削除しました`);
+      return;
     }
     case "edit-order": {
       const o = findOrder(state.orderNo); if (!o || o.status !== 0) return;
@@ -2492,6 +2508,12 @@ function pushBflFields(o) {
 }
 function pushFeedback(o) { if (LIVE) callServer("saveFeedback", [o.no, o.feedback]); }
 function pushSignature(o) { if (LIVE) callServer("saveSignature", [o.no, o.signature]); }
+
+/** 発注の完全削除（⓪発送前のみ）をサーバーへ反映する */
+function pushDeleteOrder(o) {
+  if (!LIVE) return;
+  callServer("deleteOrder", [o.no]);
+}
 
 /** Dr確認の状態をサーバーへ反映する（下書き→確認済み、取り消しの両方） */
 function pushDrCheck(o) {

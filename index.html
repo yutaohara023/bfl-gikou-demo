@@ -1878,6 +1878,11 @@ function render() {
 // ---------- イベント ----------
 document.addEventListener("click", (e) => {
   const el = e.target.closest("[data-nav],[data-clinic],[data-filter],[data-open],[data-act],[data-status-to],[data-draft-clinic],[data-cat],[data-shade],[data-rm-item],[data-rm-tooth],[data-clear-teeth],[data-show-teeth],[data-modal],[data-tooth],[data-doc],[data-fb-rate],[data-paint],[data-role],[data-imp-dia],[data-qty-step]");
+  // 完全削除の確認中（赤いボタン）に別の場所を触ったら、確認を解除して元に戻す
+  if (state.confirmDel && !(el && el.dataset.act === "delete-order")) {
+    state.confirmDel = null;
+    render();
+  }
   if (!el) return;
 
   if (el.dataset.role) { state.role = el.dataset.role; render(); return; }
@@ -1937,7 +1942,6 @@ document.addEventListener("click", (e) => {
   }
 
   if (el.dataset.nav) {
-    state.confirmDel = null;
     state.view = el.dataset.nav;
     if (state.view === "new" && draft && draft.editNo) draft = null;  // 編集中の下書きを新規に持ち込まない
     if (state.view === "new" && !draft) draft = newDraft();
@@ -1945,7 +1949,7 @@ document.addEventListener("click", (e) => {
   }
   if (el.dataset.clinic) { state.clinic = el.dataset.clinic; state.filter = "all"; render(); return; }
   if (el.dataset.filter != null) { state.filter = el.dataset.filter === "all" ? "all" : Number(el.dataset.filter); render(); return; }
-  if (el.dataset.open) { state.confirmDel = null; state.view = "detail"; state.orderNo = el.dataset.open; render(); return; }
+  if (el.dataset.open) { state.view = "detail"; state.orderNo = el.dataset.open; render(); return; }
 
   if (el.dataset.statusTo != null) {
     const o = findOrder(state.orderNo); if (!o) return;

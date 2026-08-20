@@ -1091,6 +1091,7 @@ function viewDetail() {
         ? `<button class="btn primary" data-act="dr-check">✅ ドクター確認済みにする</button>
            <p style="font-size:12px;color:var(--muted);margin:0">📝 下書きの状態です。Drが内容を確認して上のボタンを押すと、①スキャン送信／②模型発送に進められます。</p>`
         : opts.map(op => `<button class="btn primary" data-status-to="${op.to}">${esc(op.label)} →</button>`).join("")}
+      ${o.status === 0 ? '<button class="btn ghost" data-act="edit-order" style="width:100%">✏️ 発注内容を編集する</button>' : ""}
       <div style="display:flex;gap:8px">
         <button class="btn ghost" data-act="status-back" ${o.undoStack.length ? "" : "disabled"}>← ひとつ戻す</button>
         ${(isBfl() && (o.status === 3 || o.status === 4)) ? '<button class="btn danger-ghost" data-act="resend">⚠️ 要再送にする</button>' : ""}
@@ -1694,7 +1695,7 @@ function viewNew() {
   <div class="top">
     <div class="back-row">
       <button class="icon-btn" data-act="go-home" aria-label="戻る">${IC.back}</button>
-      <div class="title">新規発注（技工指示書）</div>
+      <div class="title">${d.editNo ? `発注内容の編集（${esc(d.editNo)}）` : "新規発注（技工指示書）"}</div>
     </div>
   </div>
   <main>
@@ -1738,7 +1739,7 @@ function viewNew() {
       </label>
     </div>
     ${apptWarning(d)}
-    <div class="sticky-save"><button class="btn primary" style="width:100%;padding:15px 0" data-act="save-order">この内容で発注を登録</button></div>
+    <div class="sticky-save"><button class="btn primary" style="width:100%;padding:15px 0" data-act="save-order">${d.editNo ? "変更を保存" : "この内容で発注を登録"}</button></div>
   </main>`;
 }
 // 合計金額（特急の内訳つき）
@@ -1933,6 +1934,7 @@ document.addEventListener("click", (e) => {
 
   if (el.dataset.nav) {
     state.view = el.dataset.nav;
+    if (state.view === "new" && draft && draft.editNo) draft = null;  // 編集中の下書きを新規に持ち込まない
     if (state.view === "new" && !draft) draft = newDraft();
     render(); return;
   }
@@ -2026,6 +2028,23 @@ document.addEventListener("click", (e) => {
       pushStatus(o, o.status, { note: `${ST[cur].short} → ${ST[o.status].short} に戻す` });
       showToast(`${ST[cur].short} → ${ST[o.status].short} に戻しました`);
       break;
+    }
+    case "edit-order": {
+      const o = findOrder(state.orderNo); if (!o || o.status !== 0) return;
+      draft = {
+        editNo: o.no, wasDrChecked: !!o.drChecked,
+        clinic: o.clinic, doctor: o.doctor, karte: o.karte, patient: o.patient,
+        impressionDate: o.impressionDate || todayISO(), shipDate: o.shipDate || todayISO(),
+        apptDate: o.apptDate || "", note: o.note || "",
+        rush: !!o.rush, drChecked: false,  // 内容が変わるのでDr確認は入れ直してもらう
+        items: o.items.map(it => ({
+          prosId: it.prosId, cat: it.prosId && PRO[it.prosId] ? PRO[it.prosId].cat : null,
+          teeth: [...it.teeth], teethType: { ...(it.teethType || {}) },
+          shade: it.shade || "", qty: it.qty || 1, photoInDrive: !!it.photoInDrive,
+          implant: it.implant ? { ...it.implant } : null,
+        })),
+      };
+      state.view = "new"; render(); return;
     }
     case "dr-check": {
       const o = findOrder(state.orderNo); if (!o) return;
@@ -2256,6 +2275,26 @@ function saveOrder() {
     return;
   }
 
+  // 編集モード: ⓪発送前の案件の内容を書き換えて保存する
+  if (d.editNo) {
+    const o = findOrder(d.editNo);
+    if (!o || o.status !== 0) { showToast("発送前（⓪）の案件だけ編集できます"); return; }
+    o.clinic = d.clinic; o.doctor = d.doctor; o.karte = d.karte.trim(); o.patient = d.patient.trim();
+    o.items = d.items.map(it => ({ prosId: it.prosId, teeth: sortTeeth(it.teeth), teethType: { ...(it.teethType || {}) },
+      shade: it.shade, qty: it.qty, photoInDrive: it.photoInDrive, implant: it.implant ? { ...it.implant } : null }));
+    o.note = d.note.trim(); o.impressionDate = d.impressionDate; o.shipDate = d.shipDate;
+    o.apptDate = d.apptDate; o.rush = d.rush;
+    o.drChecked = d.drChecked; o.drCheckedBy = d.drChecked ? d.doctor : ""; o.drCheckedAt = d.drChecked ? todayISO() : "";
+    save();
+    pushUpdateOrder(o);
+    const reCheck = d.wasDrChecked && !d.drChecked;
+    draft = null;
+    state.view = "detail"; state.orderNo = o.no; state.clinic = o.clinic;
+    render();
+    showToast(reCheck ? "変更を保存しました（内容が変わったのでDr確認は入れ直してください）" : "変更を保存しました");
+    return;
+  }
+
   const dateKey = todayISO().replaceAll("-", "");
   const seq = db.orders.filter(o => o.no.startsWith(dateKey)).length + 1;
   const no = `${dateKey}-${String(seq).padStart(4, "0")}`;
@@ -2419,6 +2458,25 @@ function pushNewOrder(o) {
       };
     }),
   }], res => { if (res && res.no) { o.no = res.no; render(); } });
+}
+
+/** 発注内容の編集（⓪発送前のみ）をサーバーへ反映する */
+function pushUpdateOrder(o) {
+  if (!LIVE) return;
+  callServer("updateOrder", [{
+    no: o.no,
+    clinic: o.clinic, clinicFull: CLINIC_FULL[o.clinic] || o.clinic, doctor: o.doctor,
+    karte: o.karte, patient: o.patient, note: o.note,
+    impressionDate: o.impressionDate, shipDate: o.shipDate, apptDate: o.apptDate,
+    rush: !!o.rush, drChecked: !!o.drChecked,
+    items: o.items.map(it => {
+      const p = PRO[it.prosId] || {};
+      return {
+        prosName: p.dbName || p.name, cat: p.cat, teeth: it.teeth, teethType: it.teethType || {},
+        shade: it.shade, qty: it.qty, unit: unitPrice(o.clinic, p), implant: it.implant || null,
+      };
+    }),
+  }]);
 }
 
 /** ステータス変更をサーバーへ反映する */

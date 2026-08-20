@@ -1014,7 +1014,7 @@ function homeCardsHTML(orders) {
       }).join("")}</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${statusPill(o.status)}
         ${o.rush ? '<span class="badge rush">⚡ 特急</span>' : ""}
-        ${o.drChecked ? "" : '<span class="badge nocheck">Dr未確認</span>'}
+        ${o.drChecked ? "" : o.status === 0 ? '<span class="badge nocheck">📝 下書き</span>' : '<span class="badge nocheck">Dr未確認</span>'}
       </div>
       <div class="oc-foot">
         <span>納期 <span class="due num">${due ? fmtJP(due) : "BFL設定待ち"}</span></span>
@@ -1083,9 +1083,14 @@ function viewDetail() {
         </div>`).join("")}</div>`;
 
   const opts = nextOptions(o);
+  // 下書き（⓪でDr未確認）は、Dr確認を済ませるまで①②へ進めない
+  const needsDrCheck = o.status === 0 && !o.drChecked;
   const actions = `
     <div class="status-actions" style="flex-direction:column">
-      ${opts.map(op => `<button class="btn primary" data-status-to="${op.to}">${esc(op.label)} →</button>`).join("")}
+      ${needsDrCheck
+        ? `<button class="btn primary" data-act="dr-check">✅ ドクター確認済みにする</button>
+           <p style="font-size:12px;color:var(--muted);margin:0">📝 下書きの状態です。Drが内容を確認して上のボタンを押すと、①スキャン送信／②模型発送に進められます。</p>`
+        : opts.map(op => `<button class="btn primary" data-status-to="${op.to}">${esc(op.label)} →</button>`).join("")}
       <div style="display:flex;gap:8px">
         <button class="btn ghost" data-act="status-back" ${o.undoStack.length ? "" : "disabled"}>← ひとつ戻す</button>
         ${(isBfl() && (o.status === 3 || o.status === 4)) ? '<button class="btn danger-ghost" data-act="resend">⚠️ 要再送にする</button>' : ""}
@@ -1132,7 +1137,7 @@ function viewDetail() {
       <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">${statusPill(o.status)}
         <span style="font-size:11px;color:var(--muted)">担当: ${esc(s.side)}</span>
         ${o.rush ? '<span class="badge rush">⚡ 特急</span>' : ""}
-        ${o.drChecked ? `<span class="badge" style="background:color-mix(in srgb,var(--ok) 15%,var(--surface));color:var(--ok)">✓ Dr確認済み</span>` : '<span class="badge nocheck">Dr未確認</span>'}
+        ${o.drChecked ? `<span class="badge" style="background:color-mix(in srgb,var(--ok) 15%,var(--surface));color:var(--ok)">✓ Dr確認済み</span>` : o.status === 0 ? '<span class="badge nocheck">📝 下書き（Dr確認待ち）</span>' : '<span class="badge nocheck">Dr未確認</span>'}
       </div>
       ${stepper}
       ${actions}
@@ -1729,7 +1734,7 @@ function viewNew() {
     <div class="card" style="border:1.5px solid ${d.drChecked ? "var(--accent)" : "var(--line)"}">
       <label class="check" style="padding:2px 0">
         <input type="checkbox" id="f-drcheck" ${d.drChecked ? "checked" : ""}>
-        <span><b>Dr確認済み</b><br><span style="font-size:12px;color:var(--muted)">紙の指示書と同じく、最後にDrが内容を確認したらチェックしてください</span></span>
+        <span><b>Dr確認済み</b><br><span style="font-size:12px;color:var(--muted)">チェックなしでも<b>下書きとして登録</b>できます。あとから案件画面で「ドクター確認済みにする」を押すと発送に進められます</span></span>
       </label>
     </div>
     ${apptWarning(d)}
@@ -2022,6 +2027,16 @@ document.addEventListener("click", (e) => {
       showToast(`${ST[cur].short} → ${ST[o.status].short} に戻しました`);
       break;
     }
+    case "dr-check": {
+      const o = findOrder(state.orderNo); if (!o) return;
+      o.drChecked = true; o.drCheckedBy = o.doctor; o.drCheckedAt = todayISO();
+      save(); pushDrCheck(o);
+      showToast("ドクター確認済みにしました。発送に進められます", () => {
+        o.drChecked = false; o.drCheckedBy = ""; o.drCheckedAt = "";
+        save(); pushDrCheck(o); render();
+      });
+      render(); return;
+    }
     case "resend": reasonDraft = { reason: "", comment: "", chargeable: false }; state.modal = reasonModalHTML("resend"); render(); break;
     case "cancel-order": reasonDraft = { reason: "", comment: "", chargeable: false }; state.modal = reasonModalHTML("cancel"); render(); break;
     case "reason-pick": reasonDraft.reason = el.dataset.val; state.modal = reasonModalHTML(el.dataset.kind); render(); break;
@@ -2229,10 +2244,17 @@ function saveOrder() {
   if (!d.items.length || d.items.some(it => !it.prosId)) errs.push("補綴物の選択");
   const missTeeth = d.items.filter(it => it.prosId && !PRO[it.prosId].noTeeth && !it.teeth.length);
   if (errs.length) { showToast(`未入力: ${errs.join("・")}`); return; }
-  if (missTeeth.length && !confirm("部位（歯式）が未選択の技工物があります。このまま登録しますか？")) return;
+  // confirm() はGAS配信のiframe内でブロックされるため使わない（実際に登録不能になった）。
+  // 注意事項があるときは一度警告を出し、もう一度「登録」を押したら確定する。
   const photoMismatch = d.items.some(it => it.prosId && it.shade === "写真あり" && !it.photoInDrive);
-  if (photoMismatch && !confirm("シェード「写真あり」の技工物に「シェード写真はDriveにあり」のチェックがありません。このまま登録しますか？")) return;
-  if (!d.drChecked && !confirm("「Dr確認済み」のチェックがありません。このまま登録しますか？")) return;
+  const warns = [];
+  if (missTeeth.length) warns.push("部位（歯式）が未選択の技工物があります");
+  if (photoMismatch) warns.push("シェード「写真あり」に「Driveにあり」のチェックがありません");
+  if (warns.length && !d.warnOk) {
+    d.warnOk = true;
+    showToast(`${warns.join("。")}。このまま登録するならもう一度「登録」を押してください`);
+    return;
+  }
 
   const dateKey = todayISO().replaceAll("-", "");
   const seq = db.orders.filter(o => o.no.startsWith(dateKey)).length + 1;
@@ -2251,7 +2273,9 @@ function saveOrder() {
   draft = null;
   state.view = "detail"; state.orderNo = no; state.clinic = d.clinic; state.filter = "all";
   render();
-  showToast(`発注 ${no} を登録しました（${ST[0].short}）`);
+  showToast(d.drChecked
+    ? `発注 ${no} を登録しました（${ST[0].short}）`
+    : `発注 ${no} を下書き登録しました（Dr確認後に発送へ進められます）`);
 }
 
 
@@ -2410,6 +2434,12 @@ function pushBflFields(o) {
 }
 function pushFeedback(o) { if (LIVE) callServer("saveFeedback", [o.no, o.feedback]); }
 function pushSignature(o) { if (LIVE) callServer("saveSignature", [o.no, o.signature]); }
+
+/** Dr確認の状態をサーバーへ反映する（下書き→確認済み、取り消しの両方） */
+function pushDrCheck(o) {
+  if (!LIVE) return;
+  callServer("setDrChecked", [o.no, !!o.drChecked, o.drCheckedBy || ""]);
+}
 
 /** 患者フォルダの直リンクをサーバーから取得する（1案件につき1回だけ） */
 function ensureFolderLink(o) {

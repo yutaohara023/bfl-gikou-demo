@@ -80,6 +80,8 @@ html.live .top{padding-top:16px}
 .top-actions{margin-left:auto;display:flex;gap:4px}
 .icon-btn{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:var(--muted)}
 .icon-btn:active{background:var(--surface2)}
+.icon-btn.spin{animation:odr-spin 1s linear infinite}
+@keyframes odr-spin{to{transform:rotate(360deg)}}
 .icon-btn svg{width:20px;height:20px}
 .seg{display:flex;gap:4px;padding:0 16px 10px}
 .seg button{flex:1;padding:7px 0;border-radius:9px;background:var(--surface2);color:var(--muted);font-size:13px;font-weight:600}
@@ -784,6 +786,7 @@ const state = {
   searchOpen: false,
   orderNo: null,
   confirmDel: null,      // 完全削除の2度押し確認（対象の発注番号）
+  refreshing: false,     // 🔄 サーバーから再読み込み中
   nokiShip: todayISO(),
   nokiSearch: "",
   driveQ: "",
@@ -1038,6 +1041,7 @@ function viewHome() {
     <div class="top-row">
       <div class="brand">技工物<small>BFL Lab Works — DEMO</small></div>
       <div class="top-actions">
+        ${LIVE ? `<button class="icon-btn${state.refreshing ? " spin" : ""}" data-act="reload-data" aria-label="最新の状態に更新" ${state.refreshing ? "disabled" : ""}>🔄</button>` : ""}
         <button class="icon-btn" data-act="toggle-search" aria-label="検索">${IC.search}</button>
         <button class="icon-btn" data-act="status-help" aria-label="ステータスの説明">${IC.help}</button>
       </div>
@@ -2045,6 +2049,23 @@ document.addEventListener("click", (e) => {
       pushStatus(o, o.status, { note: `${ST[cur].short} → ${ST[o.status].short} に戻す` });
       showToast(`${ST[cur].short} → ${ST[o.status].short} に戻しました`);
       break;
+    }
+    case "reload-data": {
+      if (!LIVE || state.refreshing) return;
+      state.refreshing = true;
+      render();
+      GAS.withSuccessHandler(d => {
+        state.refreshing = false;
+        if (d && d.needKey) { renderKeyGate(""); return; }
+        applyBootstrap(d);
+        render();
+        showToast("最新の状態に更新しました");
+      }).withFailureHandler(err => {
+        state.refreshing = false;
+        render();
+        showToast("更新できませんでした: " + ((err && err.message) || err));
+      }).bootstrap(APP_KEY);
+      return;
     }
     case "delete-order": {
       const o = findOrder(state.orderNo); if (!o || o.status !== 0) return;

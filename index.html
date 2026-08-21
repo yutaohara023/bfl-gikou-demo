@@ -2563,7 +2563,8 @@ function renderKeyGate(msg) {
     '<div style="max-width:340px;margin:70px auto 0;padding:0 20px;text-align:center">' +
     '<div style="font-size:42px">🔑</div>' +
     '<h2 style="margin:10px 0 6px;font-size:18px;color:var(--ink)">合言葉を入力してください</h2>' +
-    '<p style="font-size:13px;color:var(--muted);margin:0 0 16px">この端末での初回のみ必要です。院内・BFLで共有している合言葉を入力してください。</p>' +
+    '<p style="font-size:13px;color:var(--muted);margin:0 0 16px">院内・BFLで共有している合言葉を入力してください。<br>' +
+    '※毎回聞かれる端末では、合言葉つきのURL（管理者から共有されます）をホーム画面に登録すると入力不要になります。</p>' +
     (msg ? '<p style="font-size:13px;color:var(--danger);margin:0 0 10px">' + msg + '</p>' : '') +
     '<input id="key-in" type="text" autocomplete="off" autocapitalize="none" ' +
     'style="width:100%;box-sizing:border-box;padding:13px;font-size:16px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)">' +
@@ -2611,16 +2612,28 @@ function boot() {
   if (!LIVE) { render(); return; }
   document.getElementById("app").innerHTML =
     '<div style="padding:60px 20px;text-align:center;color:var(--muted)">読み込み中…</div>';
-  GAS.withSuccessHandler(d => {
-       if (d && d.needKey) { renderKeyGate(APP_KEY ? "合言葉が違います" : ""); return; }
-       applyBootstrap(d); lastLoadAt = Date.now(); render();
-     })
-     .withFailureHandler(err => {
-       document.getElementById("app").innerHTML =
-         '<div style="padding:40px 20px;text-align:center"><p>データを読み込めませんでした。</p>' +
-         '<p style="font-size:12px;color:var(--muted)">' + ((err && err.message) || err) + '</p></div>';
-     })
-     .bootstrap(APP_KEY);
+  // iPad等はブラウザ終了時にこのページの保存領域を消すことがあり、合言葉が
+  // 毎回聞かれてしまう。URLに ?k=合言葉 を付けて開けば入力を省略できるようにする
+  // （アプリのURLは親ページ側にあるため google.script.url 経由で読む）
+  const start = () => {
+    GAS.withSuccessHandler(d => {
+         if (d && d.needKey) { renderKeyGate(APP_KEY ? "合言葉が違います" : ""); return; }
+         applyBootstrap(d); lastLoadAt = Date.now(); render();
+       })
+       .withFailureHandler(err => {
+         document.getElementById("app").innerHTML =
+           '<div style="padding:40px 20px;text-align:center"><p>データを読み込めませんでした。</p>' +
+           '<p style="font-size:12px;color:var(--muted)">' + ((err && err.message) || err) + '</p></div>';
+       })
+       .bootstrap(APP_KEY);
+  };
+  try {
+    google.script.url.getLocation(loc => {
+      const k = (loc && loc.parameter && (loc.parameter.k || loc.parameter.key)) || "";
+      if (k) { APP_KEY = k; try { localStorage.setItem(KEY_LS, k); } catch (e) { /* 保存不可でも可 */ } }
+      start();
+    });
+  } catch (e) { start(); }
 }
 
 // ---------- 起動 ----------

@@ -2050,23 +2050,7 @@ document.addEventListener("click", (e) => {
       showToast(`${ST[cur].short} → ${ST[o.status].short} に戻しました`);
       break;
     }
-    case "reload-data": {
-      if (!LIVE || state.refreshing) return;
-      state.refreshing = true;
-      render();
-      GAS.withSuccessHandler(d => {
-        state.refreshing = false;
-        if (d && d.needKey) { renderKeyGate(""); return; }
-        applyBootstrap(d);
-        render();
-        showToast("最新の状態に更新しました");
-      }).withFailureHandler(err => {
-        state.refreshing = false;
-        render();
-        showToast("更新できませんでした: " + ((err && err.message) || err));
-      }).bootstrap(APP_KEY);
-      return;
-    }
+    case "reload-data": reloadData(false); return;
     case "delete-order": {
       const o = findOrder(state.orderNo); if (!o || o.status !== 0) return;
       if (state.confirmDel !== o.no) { state.confirmDel = o.no; render(); return; }
@@ -2382,10 +2366,13 @@ try { APP_KEY = localStorage.getItem(KEY_LS) || ""; } catch (e) { /* 保存不�
 
 // サーバー関数を呼ぶ。失敗したら黙って落とさずトーストで知らせる。
 // 「開発者として実行」方式のため、全呼び出しの第1引数に合言葉を載せる。
-function callServer(fn, args, onOk) {
+function callServer(fn, args, onOk, onErr) {
   if (!LIVE) { if (onOk) onOk(null); return; }
   GAS.withSuccessHandler(r => { if (onOk) onOk(r); })
-     .withFailureHandler(err => showToast("保存できませんでした: " + ((err && err.message) || err)))
+     .withFailureHandler(err => {
+       if (onErr) { onErr(err); return; }
+       showToast("保存できませんでした: " + ((err && err.message) || err));
+     })
      [fn].apply(null, [APP_KEY].concat(args || []));
 }
 
@@ -2437,7 +2424,10 @@ function applyBootstrap(d) {
       (byClinic[key] = byClinic[key] || []).push(m.name);
     });
     if (Object.keys(byClinic).length) STAFF = byClinic;
-    const techs = d.staff.filter(m => m.org === "BFL" && m.role === "BFL技工士" && m.name !== "BFL")
+    // ロールに「技工」を含むBFLメンバーを技工士とする（「BFL技工士」「技工士」どちらの表記でも拾う。
+    // 「BFL」という組織代表行と、ロールが事務のメンバーは割当候補にしない）
+    const techs = d.staff.filter(m => m.org === "BFL" && m.name !== "BFL"
+      && String(m.role || "").includes("技工") && !String(m.role || "").includes("事務"))
       .map(m => m.name);
     if (techs.length) TECHNICIANS = [...new Set(techs)];
   }
@@ -2554,15 +2544,17 @@ function pushDrCheck(o) {
   callServer("setDrChecked", [o.no, !!o.drChecked, o.drCheckedBy || ""]);
 }
 
-/** 患者フォルダの直リンクをサーバーから取得する（1案件につき1回だけ） */
+/** 患者フォルダの直リンクをサーバーから取得する（1案件につき1回だけ）。
+    失敗してもトーストは出さず、Drive検索リンクに静かにフォールバックする */
 function ensureFolderLink(o) {
   if (!LIVE || o._folderReq) return;
   o._folderReq = true;
-  callServer("getPatientFolder", [o.no], res => {
-    o.patientFolderUrl = (res && res.url) || "";
+  const done = url => {
+    o.patientFolderUrl = url || "";
     o._folderDone = true;
     if (state.view === "detail" && state.orderNo === o.no) render();
-  });
+  };
+  callServer("getPatientFolder", [o.no], res => done(res && res.url), () => done(""));
 }
 
 /** 合言葉の入力画面。正しい合言葉が入るまでデータには触れない */
@@ -2586,6 +2578,34 @@ function renderKeyGate(msg) {
   document.getElementById("key-in").onkeydown = e => { if (e.key === "Enter") go(); };
 }
 
+/** サーバーからデータを取り直して画面を最新化する（🔄ボタンと画面復帰時の自動更新） */
+let lastLoadAt = 0;
+function reloadData(quiet) {
+  if (!LIVE || state.refreshing) return;
+  state.refreshing = true;
+  render();
+  GAS.withSuccessHandler(d => {
+    state.refreshing = false;
+    if (d && d.needKey) { renderKeyGate(""); return; }
+    applyBootstrap(d);
+    lastLoadAt = Date.now();
+    render();
+    if (!quiet) showToast("最新の状態に更新しました");
+  }).withFailureHandler(err => {
+    state.refreshing = false;
+    render();
+    if (!quiet) showToast("更新できませんでした: " + ((err && err.message) || err));
+  }).bootstrap(APP_KEY);
+}
+
+// タブレット・スマホでアプリに戻ってきたとき、2分以上経っていたら静かに最新化する
+// （丸の内で進めたステータスがBFL側で古いまま見える問題への対策）
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden || !LIVE || !lastLoadAt) return;
+  if (state.view !== "home" || state.modal || state.refreshing) return;
+  if (Date.now() - lastLoadAt > 2 * 60 * 1000) reloadData(true);
+});
+
 /** 起動。本番ならサーバーからデータを取ってから描画する */
 function boot() {
   if (!LIVE) { render(); return; }
@@ -2593,7 +2613,7 @@ function boot() {
     '<div style="padding:60px 20px;text-align:center;color:var(--muted)">読み込み中…</div>';
   GAS.withSuccessHandler(d => {
        if (d && d.needKey) { renderKeyGate(APP_KEY ? "合言葉が違います" : ""); return; }
-       applyBootstrap(d); render();
+       applyBootstrap(d); lastLoadAt = Date.now(); render();
      })
      .withFailureHandler(err => {
        document.getElementById("app").innerHTML =
